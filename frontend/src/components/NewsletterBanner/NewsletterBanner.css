@@ -1,0 +1,99 @@
+.newsletter-banner { 
+  position: relative; 
+  background: url('https://res.cloudinary.com/dtuqbqgz7/image/upload/v1754843353/gaming-banner-background-h67lam4jv4wcz1fx_qqxxt7.jpg') center/cover no-repeat; 
+  border-radius: 16px; 
+  padding: 32px; 
+  overflow: hidden; 
+  margin: 0; 
+  width: 100%; 
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+@media (max-width:1024px){
+  .newsletter-banner { background-position: center; background-size: cover; min-height: 220px; }
+}
+.nb-overlay { 
+  background: rgba(0,0,0,0.45); 
+  border-radius: 12px; 
+  padding: 24px; 
+  text-align: center; 
+}
+.nb-title { 
+  font-size: 40px; 
+  font-weight: 900; 
+  letter-spacing: 2px; 
+  color: #fff; 
+  margin: 0 0 8px 0; 
+}
+.nb-subtitle { 
+  color: #ddd; 
+  margin: 0 0 16px 0; 
+}
+
+.nb-form { 
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+  gap: 8px; 
+  margin-top: 8px; 
+  flex-wrap: wrap; 
+}
+.nb-input-wrapper { 
+  display: flex; 
+  align-items: center; 
+  gap: 8px; 
+  background: #111; 
+  border: 1px solid #444; 
+  border-radius: 8px; 
+  padding: 10px 12px; 
+  min-width: 280px; 
+}
+.nb-input-wrapper input { 
+  background: transparent; 
+  border: none; 
+  outline: none; 
+  color: #fff; 
+  width: 240px; 
+}
+.nb-button { 
+  background: #ff4757; 
+  color: #fff; 
+  border: none; 
+  border-radius: 8px; 
+  padding: 10px 16px; 
+  font-weight: 700; 
+  cursor: pointer; 
+}
+.nb-button:hover { 
+  background: #ff3742; 
+}
+
+.nb-status { 
+  margin-top: 10px; 
+  font-weight: 700; 
+}
+.nb-status.success { 
+  color: #2dd36f; 
+}
+.nb-status.error { 
+  color: #ff6b6b; 
+}
+
+@media (max-width: 768px) {
+  .nb-title { 
+    font-size: 28px; 
+  }
+  .nb-input-wrapper { 
+    min-width: 220px; 
+  }
+} 
+
+@media (max-width: 768px) {
+  .newsletter-banner {
+    background-image: url('https://res.cloudinary.com/dtuqbqgz7/image/upload/v1754923973/1740474917614_kzhb3i.png');
+    background-size: cover;
+    background-position: center;
+  }
+}
