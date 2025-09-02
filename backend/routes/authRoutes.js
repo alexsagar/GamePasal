@@ -15,7 +15,9 @@ const {
   verify2FA,
   verify2FALogin,
   disable2FA,
-  resendVerification
+  resendVerification,
+  googleLogin,
+  facebookLogin
 } = require('../controllers/authController');
 const auth = require('../middleware/auth');
 
@@ -83,5 +85,9 @@ router.post('/verify-2fa-login', verify2FALogin);
 
 // Email Verification
 router.post('/resend-verification', resendVerification);
+
+// OAuth Routes
+router.post('/google', googleLogin);
+router.post('/facebook', facebookLogin);
 
 module.exports = router;

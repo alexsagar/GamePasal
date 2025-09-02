@@ -19,6 +19,7 @@ const walletRoutes = require('./routes/walletRoutes');
 const { walletStreamHandler } = require('./utils/walletEvents');
 const checkoutRoutes = require('./routes/checkoutRoutes');
 const webhookRoutes = require('./routes/webhookRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 
 // Import database connection
 const connectDB = require('./config/db');
@@ -130,6 +131,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/checkout', checkoutRoutes);
 app.use('/api/webhooks', webhookRoutes);
+app.use('/api/payments', paymentRoutes);
 // SSE stream for wallet updates
 app.get('/api/wallet/stream', walletStreamHandler);
 // robots.txt

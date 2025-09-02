@@ -4,6 +4,7 @@ const isAdmin = require('../middleware/isAdmin');
 const { uploadReceipt, handleReceiptUploadError } = require('../middleware/uploadReceipt');
 const {
   initTopupEsewaQR,
+  initTopupGateway,
   uploadReceipt: uploadReceiptCtrl,
   getMyWallet,
   adminListTopups,
@@ -17,6 +18,7 @@ const router = express.Router();
 
 // User routes
 router.post('/topup/esewa-qr/init', auth, initTopupEsewaQR);
+router.post('/topup/gateway/init', auth, initTopupGateway);
 router.post('/topup/esewa-qr/upload-receipt', auth, uploadReceipt.single('file'), handleReceiptUploadError, uploadReceiptCtrl);
 router.get('/me', auth, getMyWallet);
 

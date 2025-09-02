@@ -91,7 +91,33 @@ const Checkout = () => {
         clearCart();
         return;
       }
+      if (data?.gateway === 'ESEWA' && data?.formData) {
+        // For eSewa, submit form data
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = data.paymentUrl;
+        form.target = '_self';
+        
+        Object.keys(data.formData).forEach(key => {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.value = data.formData[key];
+          form.appendChild(input);
+        });
+        
+        document.body.appendChild(form);
+        form.submit();
+        return;
+      }
+      
       if (data?.redirectUrl) {
+        // For gateway payments, redirect to payment gateway
+        if (gateway && data.redirectUrl.includes('epay') || data.redirectUrl.includes('khalti')) {
+          window.location.href = data.redirectUrl;
+          return;
+        }
+        // For other redirects, handle normally
         window.location.href = data.redirectUrl;
         return;
       }

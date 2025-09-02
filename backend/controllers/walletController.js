@@ -52,6 +52,80 @@ exports.initTopupEsewaQR = async (req, res) => {
   }
 };
 
+// New method for direct payment gateway top-up
+exports.initTopupGateway = async (req, res) => {
+  try {
+    const { amountPaisa, gateway, idempotencyKey, referenceNote } = req.body || {};
+    const userId = req.user.id;
+
+    const MIN = 100 * 100; // NPR 100
+    const MAX = 100000 * 100; // NPR 100,000
+    if (!amountPaisa || typeof amountPaisa !== 'number' || amountPaisa < MIN || amountPaisa > MAX) {
+      return res.status(400).json({ success: false, message: 'Invalid amount' });
+    }
+    if (!gateway || !['ESEWA', 'KHALTI'].includes(gateway)) {
+      return res.status(400).json({ success: false, message: 'Valid gateway required (ESEWA or KHALTI)' });
+    }
+    if (!idempotencyKey) {
+      return res.status(400).json({ success: false, message: 'idempotencyKey required' });
+    }
+
+    const existing = await WalletTransaction.findOne({ user: userId, idempotencyKey }).lean();
+    if (existing) {
+      return res.status(200).json({ 
+        success: true, 
+        message: 'Already initialized', 
+        data: { 
+          txnId: existing._id, 
+          paymentUrl: existing.paymentUrl,
+          alreadyExists: true 
+        } 
+      });
+    }
+
+    // Limit pending tickets per user
+    const pendingCount = await WalletTransaction.countDocuments({ 
+      user: userId, 
+      status: { $in: ['PENDING','UNDER_REVIEW'] } 
+    });
+    if (pendingCount >= 3) {
+      return res.status(429).json({ 
+        success: false, 
+        message: 'Too many pending top-ups. Please complete existing ones.' 
+      });
+    }
+
+    // Create transaction record
+    const txn = await WalletTransaction.create({
+      user: userId,
+      type: 'TOPUP',
+      method: `${gateway}_GATEWAY`,
+      amount: amountPaisa,
+      status: 'PENDING',
+      gateway: gateway,
+      referenceNote: referenceNote || '',
+      idempotencyKey
+    });
+
+    // Redirect to payment controller
+    const paymentController = require('./paymentController');
+    
+    // Update request body with required parameters for payment controller
+    req.body.purpose = 'TOPUP';
+    req.body.orderId = null; // No order for wallet top-up
+    
+    if (gateway === 'ESEWA') {
+      return paymentController.initiateEsewaPayment(req, res);
+    } else if (gateway === 'KHALTI') {
+      return paymentController.initiateKhaltiPayment(req, res);
+    }
+
+  } catch (e) {
+    console.error('initTopupGateway error:', e);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
 exports.uploadReceipt = async (req, res) => {
   try {
     const userId = req.user.id;

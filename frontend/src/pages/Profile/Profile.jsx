@@ -23,6 +23,8 @@ import {
   XCircle
 } from 'lucide-react';
 import api, { walletAPI } from '../../services/api';
+import paymentAPI from '../../services/paymentAPI';
+import PaymentMethodSelector from '../../components/PaymentMethodSelector/PaymentMethodSelector';
 import { toDataURL as qrToDataURL } from 'qrcode';
 import './Profile.css';
 
@@ -94,6 +96,11 @@ const Profile = () => {
   const [currentTopupTxnId, setCurrentTopupTxnId] = useState('');
   const [qrMeta, setQrMeta] = useState(null);
   const [receiptFile, setReceiptFile] = useState(null);
+  
+  // Payment gateway states
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
+  const [paymentLoading, setPaymentLoading] = useState(false);
+  const [showPaymentMethods, setShowPaymentMethods] = useState(false);
 
   const formatNPR = (paisa) => `NRS ${(Math.round(paisa) / 100).toFixed(2)}`;
 
@@ -164,6 +171,84 @@ const Profile = () => {
       }
     } catch (e) {
       setMessage({ type: 'error', text: 'Failed to upload receipt' });
+    }
+  };
+
+  // Payment gateway functions
+  const handlePaymentMethodChange = (method) => {
+    setSelectedPaymentMethod(method);
+  };
+
+  const handlePaymentInitiate = async (method) => {
+    const amountNum = Number(topupAmountNPR);
+    if (!amountNum || amountNum < 100 || amountNum > 100000) {
+      setMessage({ type: 'error', text: 'Enter amount between NPR 100 and 100,000' });
+      return;
+    }
+
+    setPaymentLoading(true);
+    setMessage({ type: '', text: '' });
+
+    try {
+      const idempotencyKey = (window.crypto?.randomUUID && window.crypto.randomUUID()) || `${Date.now()}-${Math.random()}`;
+      
+      if (method === 'esewa-qr') {
+        // Use existing QR method
+        const res = await walletAPI.initTopupEsewaQR({
+          amountPaisa: Math.round(amountNum * 100),
+          idempotencyKey,
+          referenceNote: topupReferenceNote || ''
+        });
+        
+        if (res.data?.success) {
+          setCurrentTopupTxnId(res.data.data.txnId);
+          setQrMeta(res.data.data.qr);
+          setMessage({ type: 'success', text: 'Top-up ticket created. Upload your receipt after payment.' });
+        } else {
+          setMessage({ type: 'error', text: res.data?.message || 'Failed to create top-up ticket' });
+        }
+      } else if (method === 'esewa' || method === 'khalti') {
+        // Use gateway payment
+        const res = await paymentAPI.initTopupGateway({
+          amountPaisa: Math.round(amountNum * 100),
+          gateway: method.toUpperCase(),
+          idempotencyKey,
+          referenceNote: topupReferenceNote || ''
+        });
+        
+        if (res.data?.success) {
+          if (res.data.data.gateway === 'ESEWA' && res.data.data.formData) {
+            // For eSewa, submit form data
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = res.data.data.paymentUrl;
+            form.target = '_self';
+            
+            Object.keys(res.data.data.formData).forEach(key => {
+              const input = document.createElement('input');
+              input.type = 'hidden';
+              input.name = key;
+              input.value = res.data.data.formData[key];
+              form.appendChild(input);
+            });
+            
+            document.body.appendChild(form);
+            form.submit();
+          } else if (res.data.data.paymentUrl) {
+            // For other gateways, redirect to payment gateway
+            window.location.href = res.data.data.paymentUrl;
+          } else {
+            setMessage({ type: 'error', text: 'Payment URL not received' });
+          }
+        } else {
+          setMessage({ type: 'error', text: res.data?.message || 'Failed to initiate payment' });
+        }
+      }
+    } catch (e) {
+      console.error('Payment initiation error:', e);
+      setMessage({ type: 'error', text: 'Failed to initiate payment' });
+    } finally {
+      setPaymentLoading(false);
     }
   };
 
@@ -876,18 +961,52 @@ const Profile = () => {
                 </div>
 
                 <div className="setting-card" style={{ marginBottom: 16 }}>
-                  <h3>Add Funds via eSewa QR</h3>
+                  <h3>Add Funds to Wallet</h3>
                   <div className="form-row">
                     <div className="form-group">
                       <label className="form-label">Amount (NPR)</label>
-                      <input className="form-input" type="number" min="100" max="25000" value={topupAmountNPR} onChange={(e)=>setTopupAmountNPR(e.target.value)} placeholder="e.g., 1000" />
+                      <input 
+                        className="form-input" 
+                        type="number" 
+                        min="100" 
+                        max="100000" 
+                        value={topupAmountNPR} 
+                        onChange={(e)=>setTopupAmountNPR(e.target.value)} 
+                        placeholder="e.g., 1000" 
+                      />
                     </div>
                     <div className="form-group">
                       <label className="form-label">Reference Note (optional)</label>
-                      <input className="form-input" type="text" value={topupReferenceNote} onChange={(e)=>setTopupReferenceNote(e.target.value)} placeholder="Sender name / eSewa ref no." />
+                      <input 
+                        className="form-input" 
+                        type="text" 
+                        value={topupReferenceNote} 
+                        onChange={(e)=>setTopupReferenceNote(e.target.value)} 
+                        placeholder="Reference note" 
+                      />
                     </div>
                   </div>
-                  <button className="btn btn-primary" onClick={initTopup}>Create Top-up Ticket</button>
+                  
+                  <div style={{ marginTop: 16 }}>
+                    <button 
+                      className="btn btn-outline" 
+                      onClick={() => setShowPaymentMethods(!showPaymentMethods)}
+                      style={{ marginBottom: 16 }}
+                    >
+                      {showPaymentMethods ? 'Hide Payment Methods' : 'Choose Payment Method'}
+                    </button>
+                    
+                    {showPaymentMethods && (
+                      <PaymentMethodSelector
+                        selectedMethod={selectedPaymentMethod}
+                        onMethodChange={handlePaymentMethodChange}
+                        amount={Math.round(Number(topupAmountNPR) * 100) || 0}
+                        onPaymentInitiate={handlePaymentInitiate}
+                        loading={paymentLoading}
+                        disabled={!topupAmountNPR || Number(topupAmountNPR) < 100}
+                      />
+                    )}
+                  </div>
                 </div>
 
                 {qrMeta && (

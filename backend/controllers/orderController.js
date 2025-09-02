@@ -57,9 +57,15 @@ const createOrder = async (req, res) => {
       await product.save();
     }
 
+    // Generate order number with timestamp to avoid race conditions
+    const timestamp = Date.now().toString().slice(-6);
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    const orderNumber = `ORD-${timestamp}${random}`;
+
     // Create order
     const orderData = {
       userId: req.user.id,
+      orderNumber,
       products: orderProducts,
       totalAmount: calculatedTotal,
       paymentMethod: paymentMethod || 'Pending',

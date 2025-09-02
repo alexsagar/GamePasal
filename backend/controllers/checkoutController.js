@@ -52,7 +52,7 @@ exports.createIntent = async (req, res) => {
       return res.json({ success: true, data: { orderId: existing._id, alreadyExists: true, paid: existing.paymentStatusV2 === 'PAID' } });
     }
 
-    const { totalPaisa } = await calculateCartTotals(items);
+    const { totalPaisa, lineItems } = await calculateCartTotals(items);
     const user = await User.findById(req.user.id).session(session);
     const requestedWallet = Math.max(0, Math.floor(walletAmountPaisa));
     if (requestedWallet > totalPaisa) return res.status(400).json({ success: false, message: 'Wallet amount exceeds total' });
@@ -60,9 +60,23 @@ exports.createIntent = async (req, res) => {
 
     let orderDoc; let holdTxn;
     await session.withTransaction(async () => {
+      // Generate order number with timestamp to avoid race conditions
+      const timestamp = Date.now().toString().slice(-6);
+      const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+      const orderNumber = `ORD-${timestamp}${random}`;
+      
+      // Convert lineItems to products format for Order model
+      const products = lineItems.map(item => ({
+        productId: item.productId,
+        title: item.title,
+        price: Math.round(item.unitPaisa / 100), // Convert paisa back to NPR
+        quantity: item.quantity
+      }));
+      
       const [order] = await Order.create([{ 
         userId: req.user.id,
-        products: [],
+        orderNumber,
+        products,
         totalAmount: Math.round(totalPaisa / 100),
         paymentMethod: 'Pending',
         paymentStatus: 'pending',
@@ -121,7 +135,84 @@ exports.createIntent = async (req, res) => {
       gatewayRef: null
     });
 
-    // TODO: integrate actual gateway intent; for now return a placeholder redirect
+    // Integrate with payment gateways
+    if (gateway === 'ESEWA' || gateway === 'KHALTI') {
+      try {
+        const paymentController = require('./paymentController');
+        
+        // Create payment intent
+        const paymentReq = {
+          body: {
+            amountPaisa: remainder,
+            purpose: 'PURCHASE',
+            orderId: orderDoc._id,
+            idempotencyKey: `${orderDoc._id}-${Date.now()}`
+          },
+          user: { id: req.user.id }
+        };
+        
+        // Create a mock response object to capture the payment data
+        let paymentData = null;
+        const mockRes = {
+          status: (code) => ({
+            json: (data) => {
+              if (data.success && data.data) {
+                paymentData = data.data;
+              }
+              return mockRes;
+            }
+          }),
+          json: (data) => {
+            if (data.success && data.data) {
+              paymentData = data.data;
+            }
+            return mockRes;
+          }
+        };
+        
+        if (gateway === 'ESEWA') {
+          await paymentController.initiateEsewaPayment(paymentReq, mockRes);
+        } else if (gateway === 'KHALTI') {
+          await paymentController.initiateKhaltiPayment(paymentReq, mockRes);
+        }
+        
+        if (paymentData) {
+          if (gateway === 'ESEWA' && paymentData.formData) {
+            // For eSewa, return form data for frontend to submit
+            return res.json({ 
+              success: true, 
+              data: { 
+                orderId: orderDoc._id, 
+                paid: false, 
+                gateway: 'ESEWA',
+                paymentUrl: paymentData.paymentUrl,
+                formData: paymentData.formData
+              } 
+            });
+          } else if (paymentData.paymentUrl) {
+            // For Khalti and other gateways, return redirect URL
+            return res.json({ 
+              success: true, 
+              data: { 
+                orderId: orderDoc._id, 
+                paid: false, 
+                redirectUrl: paymentData.paymentUrl 
+              } 
+            });
+          }
+        }
+        
+        throw new Error('Payment data not generated');
+      } catch (paymentError) {
+        console.error('Payment gateway integration error:', paymentError);
+        return res.status(500).json({ 
+          success: false, 
+          message: 'Failed to initiate payment gateway' 
+        });
+      }
+    }
+
+    // For other gateways or no gateway, return placeholder
     return res.json({ success: true, data: { orderId: orderDoc._id, paid: false, redirectUrl: '/gateway/redirect' } });
   } catch (e) {
     res.status(400).json({ success: false, message: e.message || 'Failed to create intent' });

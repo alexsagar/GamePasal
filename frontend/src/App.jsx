@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
 import Navbar from './components/Navbar/Navbar';
@@ -14,6 +15,8 @@ import Checkout from './pages/Checkout/Checkout';
 import Profile from './pages/Profile/Profile';
 import Login from './pages/Auth/Login';
 import Signup from './pages/Auth/Signup';
+import PaymentSuccess from './pages/Payment/PaymentSuccess';
+import PaymentFailure from './pages/Payment/PaymentFailure';
 const AdminPanel = lazy(() => import('./pages/Admin/AdminPanel'));
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import { Toaster } from 'react-hot-toast';
@@ -50,6 +53,8 @@ const AppContent = () => {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/payment/success" element={<PaymentSuccess />} />
+          <Route path="/payment/failure" element={<PaymentFailure />} />
           {/* Static pages */}
           <Route path="/about" element={<About />} />
           <Route path="/careers" element={<Careers />} />
@@ -95,17 +100,22 @@ const AppContent = () => {
 };
 
 function App() {
+  // Google OAuth Client ID - you'll need to replace this with your actual client ID
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || 'your-google-client-id.apps.googleusercontent.com';
+
   return (
     <>
       <Toaster position="top-right" toastOptions={{ duration: 3500 }} />
-      <AuthProvider>
-        <CartProvider>
-          <Router>
-            <ScrollToTop />
-            <AppContent />
-          </Router>
-        </CartProvider>
-      </AuthProvider>
+      <GoogleOAuthProvider clientId={googleClientId}>
+        <AuthProvider>
+          <CartProvider>
+            <Router>
+              <ScrollToTop />
+              <AppContent />
+            </Router>
+          </CartProvider>
+        </AuthProvider>
+      </GoogleOAuthProvider>
     </>
   );
 }

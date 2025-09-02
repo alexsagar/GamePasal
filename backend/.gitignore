@@ -1,1 +1,15 @@
+# dependencies
+node_modules/
+
+# env files
 .env
+.env.*
+!.env.example    # keep a safe template if you have one
+
+# logs & misc
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+build/

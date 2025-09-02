@@ -945,6 +945,192 @@ const resendVerification = async (req, res) => {
   }
 };
 
+// @desc    Google OAuth login
+// @route   POST /api/auth/google
+// @access  Public
+const googleLogin = async (req, res) => {
+  try {
+    const { idToken, email, name, picture } = req.body;
+
+    if (!idToken || !email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Google ID token and email are required'
+      });
+    }
+
+    // Check if user exists with this email
+    let user = await User.findOne({ email });
+
+    if (user) {
+      // User exists, check if Google account is linked
+      if (!user.socialAccounts?.google?.verified) {
+        // Link Google account to existing user
+        user.linkSocialAccount('google', {
+          id: idToken.split('.')[1], // Extract user ID from token
+          email: email
+        });
+        await user.save();
+      }
+    } else {
+      // Create new user with Google account
+      const username = name?.replace(/\s+/g, '_').toLowerCase() || email.split('@')[0];
+      
+      // Ensure username is unique
+      let uniqueUsername = username;
+      let counter = 1;
+      while (await User.findOne({ username: uniqueUsername })) {
+        uniqueUsername = `${username}_${counter}`;
+        counter++;
+      }
+
+      user = new User({
+        username: uniqueUsername,
+        email: email,
+        password: crypto.randomBytes(32).toString('hex'), // Random password
+        isVerified: true,
+        emailVerified: true
+      });
+
+      // Link Google account
+      user.linkSocialAccount('google', {
+        id: idToken.split('.')[1],
+        email: email
+      });
+
+      await user.save();
+    }
+
+    // Update last login
+    user.lastLogin = new Date();
+    
+    // Generate tokens
+    const accessToken = generateToken(user._id);
+    const { token: refreshToken, refreshToken: refreshTokenValue } = generateRefreshToken(user._id);
+    
+    // Add refresh token to user
+    user.addRefreshToken(refreshTokenValue);
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Google login successful',
+      data: {
+        accessToken,
+        refreshToken,
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+          isVerified: user.isVerified
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Google login error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during Google login'
+    });
+  }
+};
+
+// @desc    Facebook OAuth login
+// @route   POST /api/auth/facebook
+// @access  Public
+const facebookLogin = async (req, res) => {
+  try {
+    const { accessToken, userID, email, name, picture } = req.body;
+
+    if (!accessToken || !userID || !email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Facebook access token, user ID, and email are required'
+      });
+    }
+
+    // Check if user exists with this email
+    let user = await User.findOne({ email });
+
+    if (user) {
+      // User exists, check if Facebook account is linked
+      if (!user.socialAccounts?.facebook?.verified) {
+        // Link Facebook account to existing user
+        user.linkSocialAccount('facebook', {
+          id: userID,
+          email: email
+        });
+        await user.save();
+      }
+    } else {
+      // Create new user with Facebook account
+      const username = name?.replace(/\s+/g, '_').toLowerCase() || email.split('@')[0];
+      
+      // Ensure username is unique
+      let uniqueUsername = username;
+      let counter = 1;
+      while (await User.findOne({ username: uniqueUsername })) {
+        uniqueUsername = `${username}_${counter}`;
+        counter++;
+      }
+
+      user = new User({
+        username: uniqueUsername,
+        email: email,
+        password: crypto.randomBytes(32).toString('hex'), // Random password
+        isVerified: true,
+        emailVerified: true
+      });
+
+      // Link Facebook account
+      user.linkSocialAccount('facebook', {
+        id: userID,
+        email: email
+      });
+
+      await user.save();
+    }
+
+    // Update last login
+    user.lastLogin = new Date();
+    
+    // Generate tokens
+    const accessTokenJWT = generateToken(user._id);
+    const { token: refreshToken, refreshToken: refreshTokenValue } = generateRefreshToken(user._id);
+    
+    // Add refresh token to user
+    user.addRefreshToken(refreshTokenValue);
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Facebook login successful',
+      data: {
+        accessToken: accessTokenJWT,
+        refreshToken,
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          phone: user.phone,
+          role: user.role,
+          isVerified: user.isVerified
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Facebook login error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during Facebook login'
+    });
+  }
+};
+
 module.exports = {
   register,
   verifyOTP,
@@ -960,5 +1146,7 @@ module.exports = {
   verify2FA,
   verify2FALogin,
   disable2FA,
-  resendVerification
+  resendVerification,
+  googleLogin,
+  facebookLogin
 };

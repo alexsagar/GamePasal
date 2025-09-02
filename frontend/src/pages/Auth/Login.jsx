@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Eye, EyeOff, Mail, Lock, Gamepad2 } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, Gamepad2, Facebook } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 import toast from 'react-hot-toast';
 import './Auth.css';
 
@@ -10,7 +11,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { login, completeTwoFactorLogin } = useAuth();
+  const { login, completeTwoFactorLogin, googleLogin, facebookLogin } = useAuth();
   const [twoFARequired, setTwoFARequired] = useState(false);
   const [tempToken, setTempToken] = useState('');
   const [twoFACode, setTwoFACode] = useState('');
@@ -60,6 +61,127 @@ const Login = () => {
       toast.error(res.message || 'Invalid 2FA code');
     }
     setLoading(false);
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      setLoading(true);
+      
+      // Decode the JWT token to get user info
+      const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: {
+          Authorization: `Bearer ${credentialResponse.credential}`,
+        },
+      });
+      
+      const googleUser = await response.json();
+      
+      const result = await googleLogin({
+        idToken: credentialResponse.credential,
+        email: googleUser.email,
+        name: googleUser.name,
+        picture: googleUser.picture
+      });
+
+      if (result.success) {
+        toast.success('Successfully logged in with Google!');
+        navigate(from, { replace: true });
+      } else {
+        toast.error(result.message || 'Google login failed');
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      toast.error('Google login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    toast.error('Google login failed. Please try again.');
+  };
+
+  const handleFacebookLogin = async () => {
+    try {
+      setLoading(true);
+      
+      // Wait for Facebook SDK to load
+      const waitForFB = () => {
+        return new Promise((resolve) => {
+          if (window.FB) {
+            resolve();
+            return;
+          }
+          
+          const checkFB = () => {
+            if (window.FB) {
+              resolve();
+            } else {
+              setTimeout(checkFB, 100);
+            }
+          };
+          checkFB();
+        });
+      };
+
+      await waitForFB();
+
+      // Initialize Facebook SDK if not already done
+      if (!window.FB.getLoginStatus) {
+        window.FB.init({
+          appId: import.meta.env.VITE_FACEBOOK_APP_ID || 'your-facebook-app-id',
+          cookie: true,
+          xfbml: true,
+          version: 'v18.0'
+        });
+      }
+
+      window.FB.login((response) => {
+        if (response.authResponse) {
+          handleFacebookResponse(response.authResponse);
+        } else {
+          toast.error('Facebook login was cancelled');
+          setLoading(false);
+        }
+      }, { scope: 'email,public_profile' });
+    } catch (error) {
+      console.error('Facebook login error:', error);
+      toast.error('Facebook login failed. Please try again.');
+      setLoading(false);
+    }
+  };
+
+  const handleFacebookResponse = async (authResponse) => {
+    try {
+      // Get user info from Facebook
+      window.FB.api('/me', { fields: 'id,name,email,picture' }, async (userInfo) => {
+        try {
+          const result = await facebookLogin({
+            accessToken: authResponse.accessToken,
+            userID: userInfo.id,
+            email: userInfo.email,
+            name: userInfo.name,
+            picture: userInfo.picture?.data?.url
+          });
+
+          if (result.success) {
+            toast.success('Successfully logged in with Facebook!');
+            navigate(from, { replace: true });
+          } else {
+            toast.error(result.message || 'Facebook login failed');
+          }
+        } catch (error) {
+          console.error('Facebook API error:', error);
+          toast.error('Facebook login failed. Please try again.');
+        } finally {
+          setLoading(false);
+        }
+      });
+    } catch (error) {
+      console.error('Facebook response error:', error);
+      toast.error('Facebook login failed. Please try again.');
+      setLoading(false);
+    }
   };
 
   return (
@@ -169,12 +291,23 @@ const Login = () => {
         </div>
 
         <div className="social-auth">
-          <button className="social-btn google">
-            <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" />
-            Google
-          </button>
-          <button className="social-btn facebook">
-            <span>f</span>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            useOneTap={false}
+            theme="outline"
+            size="large"
+            width="300"
+            text="continue_with"
+            shape="rectangular"
+            logo_alignment="left"
+          />
+          <button 
+            className="social-btn facebook"
+            onClick={handleFacebookLogin}
+            disabled={loading}
+          >
+            <Facebook size={20} />
             Facebook
           </button>
         </div>

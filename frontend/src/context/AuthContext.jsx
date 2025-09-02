@@ -338,6 +338,76 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify({ ...state.user, ...userData }));
   };
 
+  const googleLogin = async (googleData) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/google`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(googleData),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        const { accessToken, refreshToken, user } = data.data;
+        
+        // Store tokens and user data
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        localStorage.setItem('user', JSON.stringify(user));
+
+        dispatch({
+          type: 'LOGIN_SUCCESS',
+          payload: { user, accessToken, refreshToken }
+        });
+
+        return { success: true };
+      } else {
+        return { success: false, message: data.message };
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      return { success: false, message: 'Network error occurred' };
+    }
+  };
+
+  const facebookLogin = async (facebookData) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/facebook`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(facebookData),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        const { accessToken, refreshToken, user } = data.data;
+        
+        // Store tokens and user data
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        localStorage.setItem('user', JSON.stringify(user));
+
+        dispatch({
+          type: 'LOGIN_SUCCESS',
+          payload: { user, accessToken, refreshToken }
+        });
+
+        return { success: true };
+      } else {
+        return { success: false, message: data.message };
+      }
+    } catch (error) {
+      console.error('Facebook login error:', error);
+      return { success: false, message: 'Network error occurred' };
+    }
+  };
+
   // Make refreshWallet available globally for admin panel
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -364,7 +434,9 @@ export const AuthProvider = ({ children }) => {
       refreshAccessToken,
       refreshWallet,
       updateUser,
-      completeTwoFactorLogin
+      completeTwoFactorLogin,
+      googleLogin,
+      facebookLogin
     }}>
       {children}
     </AuthContext.Provider>

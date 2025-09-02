@@ -113,9 +113,11 @@ const orderSchema = new mongoose.Schema({
 
 // Generate order number before saving
 orderSchema.pre('save', async function(next) {
-  if (this.isNew) {
-    const count = await mongoose.model('Order').countDocuments();
-    this.orderNumber = `ORD-${String(count + 1).padStart(6, '0')}`;
+  if (this.isNew && !this.orderNumber) {
+    // Generate order number with timestamp to avoid race conditions
+    const timestamp = Date.now().toString().slice(-6);
+    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    this.orderNumber = `ORD-${timestamp}${random}`;
   }
   next();
 });
