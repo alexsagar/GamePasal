@@ -5,7 +5,416 @@
   --surface-light: #fff;
 }
 
-/* Hero Section */
+/* Hero Bento Section */
+.hero-bento {
+  padding: 40px 0;
+  background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+}
+
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 20px;
+  max-width: 1600px;
+  margin: 0 auto;
+  min-height: 600px;
+}
+
+.bento-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 24px;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.bento-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(255, 86, 97, 0.15);
+  border-color: rgba(255, 86, 97, 0.3);
+}
+
+.bento-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent-pink), var(--accent-pink-dark));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.bento-card:hover::before {
+  opacity: 1;
+}
+
+/* Main Hero Card */
+.bento-hero-main {
+  grid-column: 1 / 13;
+  grid-row: 1;
+  padding: 0;
+  min-height: 400px;
+}
+
+.hero-card-content {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.hero-background {
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.hero-background.hero-default {
+  background: linear-gradient(135deg, var(--accent-pink), var(--accent-pink-dark));
+}
+
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(0,0,0,0.6), rgba(255,86,97,0.15));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+.hero-info {
+  text-align: center;
+  color: white;
+  max-width: 600px;
+}
+
+.hero-title {
+  font-size: 48px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  line-height: 1.2;
+}
+
+.hero-subtitle {
+  font-size: 20px;
+  margin-bottom: 32px;
+  opacity: 0.9;
+  line-height: 1.4;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Game Navigation Cards */
+.game-nav-card {
+  grid-column: span 2;
+  grid-row: 2;
+  padding: 0 !important;
+  min-height: 200px !important;
+  width: 100% !important;
+  aspect-ratio: 1 !important;
+  max-width: 240px !important;
+}
+
+/* Specific positioning for game navigation cards in a row - evenly spaced */
+.game-nav-card:nth-child(2) {
+  /* PC Games */
+  grid-column: 1 / 3;
+  justify-self: start;
+}
+
+.game-nav-card:nth-child(3) {
+  /* PlayStation */
+  grid-column: 3 / 5;
+  justify-self: center;
+}
+
+.game-nav-card:nth-child(4) {
+  /* Xbox Games */
+  grid-column: 5 / 7;
+  justify-self: center;
+}
+
+.game-nav-card:nth-child(5) {
+  /* Gift Cards */
+  grid-column: 7 / 9;
+  justify-self: center;
+}
+
+.game-nav-card:nth-child(6) {
+  /* Special Offers */
+  grid-column: 9 / 11;
+  justify-self: center;
+}
+
+.game-nav-card:nth-child(7) {
+  /* Software */
+  grid-column: 11 / 13;
+  justify-self: end;
+}
+
+.game-nav-link {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  text-decoration: none !important;
+  color: inherit !important;
+}
+
+.game-nav-wrapper {
+  padding: 20px 16px !important;
+  text-align: center !important;
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: all 0.3s ease !important;
+  min-height: 140px !important;
+}
+
+.game-nav-card:hover .game-nav-wrapper {
+  background: rgba(255, 86, 97, 0.05) !important;
+}
+
+.game-nav-icon {
+  width: 48px !important;
+  height: 48px !important;
+  background: var(--accent-pink) !important;
+  border-radius: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-bottom: 12px !important;
+  color: white !important;
+  transition: all 0.3s ease !important;
+  flex-shrink: 0 !important;
+}
+
+.game-nav-card:hover .game-nav-icon {
+  transform: scale(1.05) !important;
+  box-shadow: 0 4px 15px rgba(255, 86, 97, 0.3) !important;
+}
+
+.game-nav-title {
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: #fff !important;
+  margin-bottom: 6px !important;
+  line-height: 1.2 !important;
+  text-align: center !important;
+}
+
+.game-nav-desc {
+  font-size: 12px !important;
+  color: #999 !important;
+  margin: 0 !important;
+  line-height: 1.3 !important;
+  text-align: center !important;
+}
+
+
+
+/* Loading States */
+.bento-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #cccccc;
+  font-size: 16px;
+}
+
+/* Responsive Design */
+@media (max-width: 1400px) {
+  .bento-grid {
+    max-width: 1200px;
+    gap: 20px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .bento-grid {
+    max-width: 1000px;
+    gap: 16px;
+  }
+  
+  .bento-hero-main {
+    grid-column: 1 / 13;
+    grid-row: 1;
+    min-height: 350px;
+  }
+  
+  .game-nav-card {
+    grid-column: span 2;
+    aspect-ratio: 1;
+    min-height: 180px;
+    max-width: 240px;
+  }
+  
+  .game-nav-card:nth-child(2),
+  .game-nav-card:nth-child(3),
+  .game-nav-card:nth-child(4),
+  .game-nav-card:nth-child(5),
+  .game-nav-card:nth-child(6),
+  .game-nav-card:nth-child(7) {
+    justify-self: center;
+  }
+  
+  .hero-title {
+    font-size: 36px;
+  }
+  
+  .hero-subtitle {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-bento {
+    padding: 24px 0;
+  }
+  
+  .bento-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    min-height: auto;
+  }
+  
+  .bento-card {
+    padding: 20px;
+  }
+  
+  .bento-hero-main {
+    grid-column: 1 / 4;
+    grid-row: 1;
+    min-height: 300px;
+  }
+  
+  .game-nav-card {
+    grid-column: span 1;
+    grid-row: 2;
+    aspect-ratio: 1;
+    min-height: 160px;
+    max-width: 200px;
+  }
+  
+  .game-nav-card:nth-child(2),
+  .game-nav-card:nth-child(3),
+  .game-nav-card:nth-child(4),
+  .game-nav-card:nth-child(5),
+  .game-nav-card:nth-child(6),
+  .game-nav-card:nth-child(7) {
+    justify-self: center;
+  }
+  
+  .hero-title {
+    font-size: 28px;
+  }
+  
+  .hero-subtitle {
+    font-size: 16px;
+  }
+  
+  .game-nav-wrapper {
+    padding: 16px 12px !important;
+    min-height: 120px !important;
+  }
+  
+  .game-nav-icon {
+    width: 40px !important;
+    height: 40px !important;
+    margin-bottom: 10px !important;
+  }
+  
+  .game-nav-title {
+    font-size: 14px !important;
+  }
+  
+  .game-nav-desc {
+    font-size: 11px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .bento-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    min-height: auto;
+  }
+  
+  .bento-card {
+    padding: 16px;
+  }
+  
+  .bento-hero-main {
+    grid-column: 1 / 3;
+    grid-row: 1;
+    min-height: 250px;
+  }
+  
+  .game-nav-card {
+    grid-column: span 1;
+    grid-row: 2;
+    aspect-ratio: 1;
+    min-height: 140px;
+    max-width: 180px;
+  }
+  
+  .game-nav-card:nth-child(2),
+  .game-nav-card:nth-child(3),
+  .game-nav-card:nth-child(4),
+  .game-nav-card:nth-child(5),
+  .game-nav-card:nth-child(6),
+  .game-nav-card:nth-child(7) {
+    justify-self: center;
+  }
+  
+  .hero-title {
+    font-size: 24px;
+  }
+  
+  .hero-subtitle {
+    font-size: 14px;
+  }
+  
+  .game-nav-wrapper {
+    padding: 16px 12px !important;
+    min-height: 110px !important;
+  }
+  
+  .game-nav-icon {
+    width: 36px !important;
+    height: 36px !important;
+    margin-bottom: 8px !important;
+  }
+  
+  .game-nav-title {
+    font-size: 13px !important;
+  }
+  
+  .game-nav-desc {
+    font-size: 10px !important;
+  }
+  
+}
+
+/* Legacy Hero Section (keeping for reference) */
 .hero {
   position: relative;
   height: 600px;

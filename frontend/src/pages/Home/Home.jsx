@@ -185,110 +185,140 @@ const Home = () => {
         canonical="https://www.gamepasal.com/"
       />
 
-      {/* Hero Section (unchanged) */}
-      <section className="hero">
-        <Swiper
-          modules={[Pagination, Autoplay, Navigation]}
-          pagination={{ clickable: true }}
-          autoplay={false}
-          loop={heroSlides.length > 1}
-          slidesPerView={1}
-          className="hero-slider"
-        >
-          {heroLoading ? (
-            <SwiperSlide>
-              <div className="hero-slide loading">Loading banners...</div>
-            </SwiperSlide>
-          ) : heroSlides.length === 0 ? (
-            <SwiperSlide>
-              <div className="hero-slide empty">
-                <div className="container">
-                  <div className="hero-content">
-                    <h1 className="hero-title">No banners set</h1>
-                    <p className="hero-subtitle">Please add banners from the admin panel.</p>
-                  </div>
-                </div>
-              </div>
-            </SwiperSlide>
-          ) : (
-            heroSlides.map((slide) => {
-              const product = slide.productId || null;
-              let imageSrc = "";
-              if (slide.image && slide.image.trim() !== "") {
-                imageSrc = slide.image;
-              } else if (product && product.image) {
-                imageSrc = product.image;
-              } else {
-                imageSrc = "/vite.svg"; // Placeholder
-              }
-              return (
-                <SwiperSlide key={slide._id}><div
-                    className="hero-slide"
+      {/* Hero Bento Section */}
+      <section className="hero-bento">
+        <div className="container">
+          <div className="bento-grid">
+            {/* Main Hero Card */}
+            <div className="bento-card bento-hero-main">
+              {heroLoading ? (
+                <div className="bento-loading">Loading featured content...</div>
+              ) : heroSlides.length > 0 ? (
+                <div className="hero-card-content">
+                  <div className="hero-background" 
                     style={{
-                      backgroundImage: `url(${imageSrc})`,
+                      backgroundImage: `url(${heroSlides[0].image || heroSlides[0].productId?.image || "/vite.svg"})`,
                       backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                      backgroundRepeat: 'no-repeat',
-                      width: '100%',
-                      height: '100%'
-                    }}
-                  >
-                    <div className="hero-overlay"
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexDirection: "column",
-                        background: "rgba(0,0,0,0.5)",
-                        textAlign: "center"
-                      }}
-                    >
-                      <div className="container">
-                        <div className="hero-content">
-                          <h1 className="hero-title">{slide.title || (product && product.title)}</h1>
-                          {slide.subtitle && <p className="hero-subtitle">{slide.subtitle}</p>}
-                          {(slide.price || (product && product.price)) && (
-                            <div className="hero-price">
-                              <span className="current-price">
-                               
-                              </span>
-                              {slide.originalPrice && (
-                                <span className="original-price">{slide.originalPrice}</span>
-                              )}
-                            </div>
-                          )}
-                          {product ? (
+                      backgroundPosition: 'center'
+                    }}>
+                    <div className="hero-overlay">
+                      <div className="hero-info">
+                        <h1 className="hero-title">{heroSlides[0].title || heroSlides[0].productId?.title || "Welcome to GamePasal"}</h1>
+                        <p className="hero-subtitle">{heroSlides[0].subtitle || "Your ultimate gaming destination"}</p>
+                        <div className="hero-actions">
+                          {heroSlides[0].productId ? (
                             <button
-                              className="btn btn-primary hero-cta"
-                              onClick={e => {
-                                e.stopPropagation();
-                                addToCart({ ...product, quantity: 1 });
-                              }}
+                              className="btn btn-primary"
+                              onClick={() => addToCart({ ...heroSlides[0].productId, quantity: 1 })}
                             >
-                              {slide.buttonLabel || "Buy Now"}
+                              {heroSlides[0].buttonLabel || "Buy Now"}
                             </button>
                           ) : (
-                            (slide.buttonLabel) && (
-                              <button
-                                className="btn btn-primary hero-cta"
-                                style={{ pointerEvents: "none", opacity: 1 }}
-                                disabled
-                              >
-                                {slide.buttonLabel}
-                              </button>
-                            )
+                            <Link to="/products" className="btn btn-primary">
+                              {heroSlides[0].buttonLabel || "Explore Games"}
+                            </Link>
                           )}
                         </div>
                       </div>
                     </div>
                   </div>
-                </SwiperSlide>
-              );
-            })
-          )}
-        </Swiper>
+                </div>
+              ) : (
+                <div className="hero-card-content">
+                  <div className="hero-background hero-default">
+                    <div className="hero-overlay">
+                      <div className="hero-info">
+                        <h1 className="hero-title">Welcome to GamePasal</h1>
+                        <p className="hero-subtitle">Your ultimate gaming destination in Nepal</p>
+                        <div className="hero-actions">
+                          <Link to="/products" className="btn btn-primary">Explore Games</Link>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* PC Games Card */}
+            <div className="bento-card game-nav-card">
+              <Link to="/products?category=PC" className="game-nav-link">
+                <div className="game-nav-wrapper">
+                  <div className="game-nav-icon">
+                    <Monitor size={32} />
+                  </div>
+                  <h3 className="game-nav-title">PC Games</h3>
+                  <p className="game-nav-desc">Steam, Epic & More</p>
+                </div>
+              </Link>
+            </div>
+
+            {/* PlayStation Games Card */}
+            <div className="bento-card game-nav-card">
+              <Link to="/products?category=PlayStation" className="game-nav-link">
+                <div className="game-nav-wrapper">
+                  <div className="game-nav-icon">
+                    <Monitor size={32} />
+                  </div>
+                  <h3 className="game-nav-title">PlayStation</h3>
+                  <p className="game-nav-desc">PS4 & PS5 Games</p>
+                </div>
+              </Link>
+            </div>
+
+            {/* Xbox Games Card */}
+            <div className="bento-card game-nav-card">
+              <Link to="/products?category=Xbox" className="game-nav-link">
+                <div className="game-nav-wrapper">
+                  <div className="game-nav-icon">
+                    <Monitor size={32} />
+                  </div>
+                  <h3 className="game-nav-title">Xbox Games</h3>
+                  <p className="game-nav-desc">Xbox One & Series</p>
+                </div>
+              </Link>
+            </div>
+
+            {/* Gift Cards Card */}
+            <div className="bento-card game-nav-card">
+              <Link to="/products/gift-cards" className="game-nav-link">
+                <div className="game-nav-wrapper">
+                  <div className="game-nav-icon">
+                    <Gift size={32} />
+                  </div>
+                  <h3 className="game-nav-title">Gift Cards</h3>
+                  <p className="game-nav-desc">Digital Gift Cards</p>
+                </div>
+              </Link>
+            </div>
+
+            {/* Extra Card - Fill empty space */}
+            <div className="bento-card game-nav-card">
+              <div className="game-nav-wrapper">
+                <div className="game-nav-icon">
+                  <Star size={24} />
+                </div>
+                <h3 className="game-nav-title">Special Offers</h3>
+                <p className="game-nav-desc">Limited time deals</p>
+              </div>
+            </div>
+
+            {/* Additional Card */}
+            <div className="bento-card game-nav-card">
+              <Link to="/products/software" className="game-nav-link">
+                <div className="game-nav-wrapper">
+                  <div className="game-nav-icon">
+                    <Monitor size={32} />
+                  </div>
+                  <h3 className="game-nav-title">Software</h3>
+                  <p className="game-nav-desc">Apps & Tools</p>
+                </div>
+              </Link>
+            </div>
+
+
+          </div>
+        </div>
       </section>
 
      

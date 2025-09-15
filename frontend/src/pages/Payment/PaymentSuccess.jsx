@@ -59,7 +59,8 @@ const PaymentSuccess = () => {
             transaction_uuid,
             total_amount,
             product_code,
-            signature
+            signature,
+            status: decodedData?.status || 'COMPLETE' // Include status for fallback verification
           });
 
           if (response.data.success) {

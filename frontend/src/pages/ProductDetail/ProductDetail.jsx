@@ -171,11 +171,11 @@ const ProductDetail = () => {
           </span>
         </div>
 
-        {/* Product Details */}
-        <div className="product-detail-content">
-          {/* Product Images */}
-          <div className="product-images">
-            <div className="main-image">
+        {/* Product Bento Layout */}
+        <div className="product-bento-grid">
+          {/* Main Product Image - Large */}
+          <div className="bento-card product-image-main">
+            <div className="main-image-container">
               <img 
                 src={getImageSrc(images[selectedImage])} 
                 alt={product.title}
@@ -193,7 +193,6 @@ const ProductDetail = () => {
                 </span>
               )}
             </div>
-            
             {images.length > 1 && (
               <div className="image-thumbnails">
                 {images.map((image, index) => (
@@ -209,171 +208,161 @@ const ProductDetail = () => {
             )}
           </div>
 
-          {/* Product Info */}
-          <div className="product-info">
-            <div className="product-header">
-              <div className="product-meta">
-                <span className="product-platform">{product.platform}</span>
-                {product.genre && (
-                  <span className="product-genre">{product.genre}</span>
-                )}
-              </div>
-              
-              <h1 className="product-title">{product.title}</h1>
-              
-              {product.rating && (
-                <div className="product-rating">
-                  <div className="stars">
-                    {[...Array(5)].map((_, i) => (
-                      <Star 
-                        key={i} 
-                        size={16} 
-                        fill={i < Math.floor(product.rating) ? "#ffd700" : "none"}
-                        color="#ffd700"
-                      />
-                    ))}
-                  </div>
-                  <span className="rating-text">
-                    {product.rating} ({product.reviewCount || 0} reviews)
-                  </span>
-                </div>
+          {/* Product Title & Meta - Compact */}
+          <div className="bento-card product-title-card">
+            <div className="product-meta">
+              <span className="product-platform">{product.platform}</span>
+              {product.genre && (
+                <span className="product-genre">{product.genre}</span>
               )}
             </div>
+            <h1 className="product-title">{product.title}</h1>
+            {product.rating && (
+              <div className="product-rating">
+                <div className="stars">
+                  {[...Array(5)].map((_, i) => (
+                    <Star 
+                      key={i} 
+                      size={14} 
+                      fill={i < Math.floor(product.rating) ? "#ffd700" : "none"}
+                      color="#ffd700"
+                    />
+                  ))}
+                </div>
+                <span className="rating-text">
+                  {product.rating} ({product.reviewCount || 0})
+                </span>
+              </div>
+            )}
+          </div>
 
+          {/* Pricing & Purchase - Compact */}
+          <div className="bento-card product-purchase-card">
             <div className="product-pricing">
               {product.salePrice ? (
                 <div className="price-group">
                   <span className="current-price">NRS {product.salePrice}</span>
                   <span className="original-price">NRS {product.price}</span>
-                  <span className="savings">Save NRS {(product.price - product.salePrice).toFixed(2)}</span>
                 </div>
               ) : (
                 <span className="current-price">NRS {product.price}</span>
               )}
             </div>
-
-            <div className="product-description">
-              <h3>Description</h3>
-              <p>{product.description}</p>
+            
+            <div className="stock-info">
+              {product.stock > 0 ? (
+                <span className="in-stock">
+                  <CheckCircle size={14} />
+                  In Stock ({product.stock})
+                </span>
+              ) : (
+                <span className="out-of-stock">Out of Stock</span>
+              )}
             </div>
 
-            {product.features && product.features.length > 0 && (
-              <div className="product-features">
-                <h3>Key Features</h3>
-                <ul>
-                  {product.features.map((feature, index) => (
-                    <li key={index}>
-                      <CheckCircle size={16} />
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <div className="product-details-grid">
-              {product.developer && (
-                <div className="detail-item">
-                  <Users size={16} />
-                  <div>
-                    <span className="detail-label">Developer</span>
-                    <span className="detail-value">{product.developer}</span>
-                  </div>
-                </div>
-              )}
-              
-              {product.publisher && (
-                <div className="detail-item">
-                  <Award size={16} />
-                  <div>
-                    <span className="detail-label">Publisher</span>
-                    <span className="detail-value">{product.publisher}</span>
-                  </div>
-                </div>
-              )}
-              
-              {product.releaseDate && (
-                <div className="detail-item">
-                  <Calendar size={16} />
-                  <div>
-                    <span className="detail-label">Release Date</span>
-                    <span className="detail-value">
-                      {new Date(product.releaseDate).toLocaleDateString()}
-                    </span>
-                  </div>
-                </div>
-              )}
-              
-              <div className="detail-item">
-                <Monitor size={16} />
-                <div>
-                  <span className="detail-label">Platform</span>
-                  <span className="detail-value">{product.platform}</span>
-                </div>
+            <div className="quantity-selector">
+              <label>Qty:</label>
+              <div className="quantity-controls">
+                <button 
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  disabled={quantity <= 1}
+                >
+                  -
+                </button>
+                <span>{quantity}</span>
+                <button 
+                  onClick={() => setQuantity(quantity + 1)}
+                  disabled={quantity >= product.stock}
+                >
+                  +
+                </button>
               </div>
             </div>
 
-            {/* Purchase Section */}
-            <div className="purchase-section">
-              <div className="quantity-selector">
-                <label>Quantity:</label>
-                <div className="quantity-controls">
-                  <button 
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    disabled={quantity <= 1}
-                  >
-                    -
-                  </button>
-                  <span>{quantity}</span>
-                  <button 
-                    onClick={() => setQuantity(quantity + 1)}
-                    disabled={quantity >= product.stock}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
+            <div className="action-buttons">
+              <button 
+                className="btn btn-primary btn-compact"
+                onClick={handleBuyNow}
+                disabled={product.stock === 0}
+              >
+                <ShoppingCart size={16} />
+                Buy Now
+              </button>
+              
+              <button 
+                className={`btn btn-secondary btn-compact ${isInCart(product._id) ? 'added' : ''}`}
+                onClick={handleAddToCart}
+                disabled={product.stock === 0 || isInCart(product._id)}
+              >
+                {isInCart(product._id) ? 'Added' : 'Add to Cart'}
+              </button>
+            </div>
+          </div>
 
-              <div className="stock-info">
-                {product.stock > 0 ? (
-                  <span className="in-stock">
-                    <CheckCircle size={16} />
-                    In Stock ({product.stock} available)
-                  </span>
-                ) : (
-                  <span className="out-of-stock">Out of Stock</span>
+          {/* Description - Compact */}
+          <div className="bento-card product-description-card">
+            <h3>Description</h3>
+            <p>{product.description}</p>
+          </div>
+
+          {/* Features - Compact */}
+          {product.features && product.features.length > 0 && (
+            <div className="bento-card product-features-card">
+              <h3>Key Features</h3>
+              <ul>
+                {product.features.slice(0, 5).map((feature, index) => (
+                  <li key={index}>
+                    <CheckCircle size={12} />
+                    {feature}
+                  </li>
+                ))}
+                {product.features.length > 5 && (
+                  <li className="more-features">+{product.features.length - 5} more features</li>
                 )}
-              </div>
+              </ul>
+            </div>
+          )}
 
-              <div className="action-buttons">
-                <button 
-                  className="btn btn-primary btn-large"
-                  onClick={handleBuyNow}
-                  disabled={product.stock === 0}
-                >
-                  <ShoppingCart size={20} />
-                  Buy Now
-                </button>
-                
-                <button 
-                  className={`btn btn-secondary btn-large ${isInCart(product._id) ? 'added' : ''}`}
-                  onClick={handleAddToCart}
-                  disabled={product.stock === 0 || isInCart(product._id)}
-                >
-                  {isInCart(product._id) ? 'Added to Cart' : 'Add to Cart'}
-                </button>
+          {/* Product Details - Compact Grid */}
+          <div className="bento-card product-details-card">
+            <h3>Product Details</h3>
+            <div className="details-compact">
+              {product.developer && (
+                <div className="detail-compact">
+                  <Users size={14} />
+                  <span>{product.developer}</span>
+                </div>
+              )}
+              {product.publisher && (
+                <div className="detail-compact">
+                  <Award size={14} />
+                  <span>{product.publisher}</span>
+                </div>
+              )}
+              {product.releaseDate && (
+                <div className="detail-compact">
+                  <Calendar size={14} />
+                  <span>{new Date(product.releaseDate).toLocaleDateString()}</span>
+                </div>
+              )}
+              <div className="detail-compact">
+                <Monitor size={14} />
+                <span>{product.platform}</span>
               </div>
+            </div>
+          </div>
 
-              <div className="secondary-actions">
-                <button className="action-btn">
-                  <Heart size={20} />
-                  Add to Wishlist
-                </button>
-                <button className="action-btn">
-                  <Share2 size={20} />
-                  Share
-                </button>
-              </div>
+          {/* Secondary Actions */}
+          <div className="bento-card product-actions-card">
+            <div className="secondary-actions">
+              <button className="action-btn">
+                <Heart size={16} />
+                Wishlist
+              </button>
+              <button className="action-btn">
+                <Share2 size={16} />
+                Share
+              </button>
             </div>
           </div>
         </div>
