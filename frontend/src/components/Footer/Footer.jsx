@@ -21,10 +21,39 @@ const Footer = () => {
   };
 
   return (
-    <footer className="footer">
-      <div className="footer-container">
-        {/* Main Footer Content */}
-        <div className="footer-content">
+    <>
+      {/* Newsletter Section - Above Footer */}
+      <section className="newsletter-section-above-footer">
+        <div className="newsletter-container">
+          <div className="newsletter-content">
+            <div className="newsletter-info">
+              <h3 className="newsletter-title">Subscribe Us</h3>
+              <p className="newsletter-description">
+                Get the latest deals and updates delivered to your inbox.
+              </p>
+            </div>
+            <form className="newsletter-form" onSubmit={handleNewsletterSubmit}>
+              <div className="newsletter-input-group">
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  className="newsletter-input"
+                  required
+                />
+                <button type="submit" className="newsletter-btn">
+                  <Send size={18} />
+                  Subscribe
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <footer className="footer">
+        <div className="footer-container">
+          {/* Main Footer Content */}
+          <div className="footer-content">
           {/* Company Info */}
           <div className="footer-section company-info">
             <div className="footer-logo">
@@ -87,27 +116,8 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Newsletter Section - Full Width Below */}
-        <div className="footer-newsletter-section">
-          <h3 className="footer-title">Subscribe Us</h3>
-          <p className="newsletter-text">
-            Get the latest deals and updates delivered to your inbox.
-          </p>
-          <form className="newsletter-form" onSubmit={handleNewsletterSubmit}>
-            <div className="newsletter-input-group">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="newsletter-input"
-                required
-              />
-              <button type="submit" className="newsletter-btn">
-                <Send size={18} />
-              </button>
-            </div>
-          </form>
-          
-          {/* Contact Info */}
+        {/* Contact Info Section */}
+        <div className="footer-contact-section">
           <div className="contact-info">
             <div className="contact-item">
               <Mail size={16} />
@@ -142,6 +152,7 @@ const Footer = () => {
         </div>
       </div>
     </footer>
+    </>
   );
 };
 

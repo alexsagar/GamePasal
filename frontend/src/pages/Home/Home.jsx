@@ -355,26 +355,78 @@ const Home = () => {
       </section>
 
       {/* Top Sellers Section */}
-      <section className="top-sellers">
+      <section className="top-sellers-section">
         <div className="container">
-          <div className="section-header section-header-with-controls">
-            <div className="section-title-with-icon">
-              <Star className="section-icon" />
-              <h2 className="section-title">Top Seller</h2>
-            </div>
-            <div className="header-controls">
-              <Link to="/products?sort=bestselling" className="view-all-link">VIEW ALL</Link>
-              <div className="scroll-controls">
-                <button className="scroll-btn" onClick={() => scrollRow(topRef, -1)} aria-label="Back"><ChevronLeft size={18} /></button>
-                <button className="scroll-btn" onClick={() => scrollRow(topRef, 1)} aria-label="Next"><ChevronRight size={18} /></button>
+          <div className="section-header-modern">
+            <div className="section-title-modern">
+              <div className="title-icon-wrapper">
+                <Star className="title-icon" />
               </div>
+              <div className="title-content">
+                <h2 className="title-main">Top Sellers</h2>
+                <p className="title-subtitle">Best performing games this week</p>
+              </div>
+            </div>
+            <div className="header-actions">
+              <Link to="/products?sort=bestselling" className="view-all-btn">
+                View All
+                <ChevronRight size={16} />
+              </Link>
             </div>
           </div>
 
-          <div className="product-row" ref={topRef}>
-            {topSellers.map((product) => (
-              <div key={product._id} className="product-row-item">
-                <ProductCard product={product} variant="simple" context="home" />
+          <div className="top-sellers-grid">
+            {topSellers.slice(0, 6).map((product, index) => (
+              <div 
+                key={product._id} 
+                className={`top-seller-card ${index === 0 ? 'featured-seller' : ''}`}
+              >
+                <div className="seller-rank">
+                  #{index + 1}
+                </div>
+                <div className="seller-image-container">
+                  <img 
+                    src={product.image} 
+                    alt={product.title}
+                    loading="lazy"
+                    className="seller-image"
+                  />
+                  <div className="seller-overlay">
+                    <div className="seller-badge">
+                      <Star size={14} fill="#ffd700" color="#ffd700" />
+                      <span>Top Seller</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="seller-info">
+                  <div className="seller-meta">
+                    <span className="seller-platform">{product.platform}</span>
+                    {product.rating && (
+                      <div className="seller-rating">
+                        <Star size={12} fill="#ffd700" color="#ffd700" />
+                        <span>{product.rating}</span>
+                      </div>
+                    )}
+                  </div>
+                  <h3 className="seller-title">{product.title}</h3>
+                  <div className="seller-price">
+                    <span className="current-price">
+                      NRS {product.salePrice ? product.salePrice : product.price}
+                    </span>
+                    {product.salePrice && (
+                      <span className="original-price">NRS {product.price}</span>
+                    )}
+                  </div>
+                  <button 
+                    className="seller-buy-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      addToCart(product, 1);
+                    }}
+                  >
+                    Add to Cart
+                  </button>
+                </div>
               </div>
             ))}
           </div>

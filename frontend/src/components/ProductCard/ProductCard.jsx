@@ -61,8 +61,8 @@ const ProductCard = ({ product, featured = false, variant = "default", context =
   const ActionArea = ({ simple = false }) => {
     if (isOutOfStock) {
       return (
-        <div className={simple ? `action-area simple ${context}` : 'action-area'}>
-          <button className={simple ? `out-of-stock simple ${context}` : 'out-of-stock'} disabled aria-disabled="true">
+        <div className={simple ? `action-area-compact ${context}` : 'action-area'}>
+          <button className={simple ? `out-of-stock-compact ${context}` : 'out-of-stock'} disabled aria-disabled="true">
             Out of Stock
           </button>
         </div>
@@ -71,9 +71,9 @@ const ProductCard = ({ product, featured = false, variant = "default", context =
 
     if (!inCart) {
       return (
-        <div className={simple ? `action-area simple ${context}` : 'action-area'}>
+        <div className={simple ? `action-area-compact ${context}` : 'action-area'}>
           <button
-            className={simple ? `add-btn simple ${context}` : 'add-btn'}
+            className={simple ? `add-btn-compact ${context}` : 'add-btn'}
             onClick={handleAdd}
             aria-label="Add to cart"
             onKeyDown={(e)=>{ if(e.key==='Enter' || e.key===' '){ handleAdd(e);} }}
@@ -90,18 +90,18 @@ const ProductCard = ({ product, featured = false, variant = "default", context =
     const disablePlus = currentQty >= maxStock;
 
     return (
-      <div className={simple ? `action-area simple ${context}` : 'action-area'}>
-        <div className={simple ? `qty-stepper simple ${context}` : 'qty-stepper'} role="group" aria-label="Quantity">
+      <div className={simple ? `action-area-compact ${context}` : 'action-area'}>
+        <div className={simple ? `qty-stepper-compact ${context}` : 'qty-stepper'} role="group" aria-label="Quantity">
           <button
-            className={simple ? `qty-btn simple ${context}` : 'qty-btn'}
+            className={simple ? `qty-btn-compact ${context}` : 'qty-btn'}
             onClick={handleDecrease}
             aria-label="Decrease quantity"
           >
             −
           </button>
-          <div className="qty-value" aria-live="polite" aria-atomic="true">{currentQty}</div>
+          <div className="qty-value-compact" aria-live="polite" aria-atomic="true">{currentQty}</div>
           <button
-            className={simple ? `qty-btn simple ${context}` : 'qty-btn'}
+            className={simple ? `qty-btn-compact ${context}` : 'qty-btn'}
             onClick={handleIncrease}
             disabled={disablePlus}
             aria-label="Increase quantity"
@@ -115,15 +115,57 @@ const ProductCard = ({ product, featured = false, variant = "default", context =
 
   // --- Simple (homepage, grids) ---
   if (variant === 'simple') {
+    const discountPercentage = product.salePrice 
+      ? Math.round(((product.price - product.salePrice) / product.price) * 100)
+      : 0;
+
     return (
-      <div className={`product-card simple ${context}`} onClick={handleNavigate} style={{ cursor: 'pointer' }}>
-        <img src={getImageSrc(product.image)} alt={product.title} loading="lazy" className={`product-image simple ${context}`} />
-        <div className="product-title simple">{product.title}</div>
-        <div className="product-price simple">
-          NRS {product.salePrice ? product.salePrice : product.price}
-          {product.salePrice && <span className="simple-original-price">NRS {product.price}</span>}
+      <div className={`product-card-compact ${context}`} onClick={handleNavigate} style={{ cursor: 'pointer' }}>
+        <div className="product-image-wrapper">
+          <img 
+            src={getImageSrc(product.image)} 
+            alt={product.title} 
+            loading="lazy" 
+            className="product-image-compact"
+          />
+          {product.badge && (
+            <span className={`product-badge-compact badge-${product.badge.toLowerCase()}`}>
+              {product.badge}
+            </span>
+          )}
+          {discountPercentage > 0 && (
+            <span className="discount-badge-compact">
+              -{discountPercentage}%
+            </span>
+          )}
         </div>
-        <ActionArea simple />
+        
+        <div className="product-content-compact">
+          <div className="product-meta-compact">
+            {product.platform && (
+              <span className="platform-tag">{product.platform}</span>
+            )}
+            {product.rating && (
+              <div className="rating-compact">
+                <Star size={10} fill="#ffd700" color="#ffd700" />
+                <span>{product.rating}</span>
+              </div>
+            )}
+          </div>
+          
+          <h3 className="product-title-compact">{product.title}</h3>
+          
+          <div className="product-price-compact">
+            <span className="current-price-compact">
+              NRS {product.salePrice ? product.salePrice : product.price}
+            </span>
+            {product.salePrice && (
+              <span className="original-price-compact">NRS {product.price}</span>
+            )}
+          </div>
+          
+          <ActionArea simple />
+        </div>
       </div>
     );
   }
