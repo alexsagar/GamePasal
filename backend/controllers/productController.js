@@ -2,6 +2,7 @@ const { validationResult } = require('express-validator');
 const Product = require('../models/Product');
 const fs = require('fs');
 const path = require('path');
+const { fetchCatalog, getRecommendedProducts } = require('../services/productCatalogService');
 
 const cloudinary = require('cloudinary').v2;
 cloudinary.config({
@@ -15,83 +16,14 @@ cloudinary.config({
 // @access  Public
 const getProducts = async (req, res) => {
   try {
-    const {
-      page = 1,
-      limit = 12,
-      category,
-      platform,
-      genre,
-      search,
-      sort = 'createdAt',
-      order = 'desc',
-      minPrice,
-      maxPrice,
-      rating,
-      featured
-    } = req.query;
-
-    const filter = { isActive: true };
-     
-    if (category) {
-      filter.category = category;
-    }
-    if (platform) {
-      // Platform-specific page: only Games should match
-      filter.platform = platform;
-      if (!filter.category) {
-        filter.category = 'Game';
-      }
-    }
-    
-    if (genre) filter.genre = genre;
-    if (featured) filter.isFeatured = featured === 'true';
-
-    // Section filters
-    if (req.query.isTopSeller) filter.isTopSeller = req.query.isTopSeller === 'true';
-    if (req.query.isTrending) filter.isTrending = req.query.isTrending === 'true';
-    if (req.query.isBestSelling) filter.isBestSelling = req.query.isBestSelling === 'true';
-   if (req.query.isPreOrder !== undefined) {
-  filter.isPreOrder = req.query.isPreOrder === 'true';
-}
-    if (req.query.isDealOfTheDay) filter.isDealOfTheDay = req.query.isDealOfTheDay === 'true';
-  
-    if (rating) filter.rating = { $gte: parseFloat(rating) };
-
-    if (minPrice || maxPrice) {
-      filter.price = {};
-      if (minPrice) filter.price.$gte = parseFloat(minPrice);
-      if (maxPrice) filter.price.$lte = parseFloat(maxPrice);
-    }
-
-    if (search) {
-      filter.$text = { $search: search };
-    }
-
-    const sortOptions = {};
-    if (sort === 'price') {
-      sortOptions.price = order === 'desc' ? -1 : 1;
-    } else if (sort === 'rating') {
-      sortOptions.rating = order === 'desc' ? -1 : 1;
-    } else if (sort === 'name') {
-      sortOptions.title = order === 'desc' ? -1 : 1;
-    } else {
-      sortOptions.createdAt = order === 'desc' ? -1 : 1;
-    }
-
-    const products = await Product.find(filter)
-      .sort(sortOptions)
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .populate('createdBy', 'username');
-
-    const total = await Product.countDocuments(filter);
+    const { products, total, totalPages, parsedQuery } = await fetchCatalog(req.query);
 
     res.status(200).json({
       success: true,
       count: products.length,
       total,
-      totalPages: Math.ceil(total / limit),
-      currentPage: parseInt(page),
+      totalPages,
+      currentPage: parsedQuery.page,
       data: products
     });
 
@@ -135,6 +67,28 @@ const getProduct = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Server error while fetching product'
+    });
+  }
+};
+
+// @desc    Get content-based product recommendations
+// @route   GET /api/products/:id/recommendations
+// @access  Public
+const getProductRecommendations = async (req, res) => {
+  try {
+    const limit = Math.min(Math.max(parseInt(req.query.limit || '8', 10), 1), 12);
+    const data = await getRecommendedProducts(req.params.id, limit);
+
+    res.status(200).json({
+      success: true,
+      count: data.length,
+      data
+    });
+  } catch (error) {
+    const statusCode = error.statusCode || 500;
+    res.status(statusCode).json({
+      success: false,
+      message: error.message || 'Server error while fetching recommendations'
     });
   }
 };
@@ -189,18 +143,24 @@ const createProduct = async (req, res) => {
       rating: req.body.rating ? parseFloat(req.body.rating) : undefined,
       badge: req.body.badge && req.body.badge.trim() !== '' ? req.body.badge : undefined,
       type: req.body.type && req.body.type.trim() !== '' ? req.body.type : undefined,
+      region: req.body.region && req.body.region.trim() !== '' ? req.body.region : undefined,
+      tags: Array.isArray(req.body.tags)
+        ? req.body.tags.filter(Boolean)
+        : typeof req.body.tags === 'string'
+          ? req.body.tags.split(',').map((tag) => tag.trim()).filter(Boolean)
+          : [],
       features: features || [],
       systemRequirements: systemRequirements || {},
       releaseDate: req.body.releaseDate ? new Date(req.body.releaseDate) : undefined,
       developer: req.body.developer,
       publisher: req.body.publisher,
       // -- Homepage toggles start here --
-      isFeatured:    req.body.isFeatured    === 'true' || req.body.isFeatured    === true,
-      isTopSeller:   req.body.isTopSeller   === 'true' || req.body.isTopSeller   === true,
-      isTrending:    req.body.isTrending    === 'true' || req.body.isTrending    === true,
+      isFeatured: req.body.isFeatured === 'true' || req.body.isFeatured === true,
+      isTopSeller: req.body.isTopSeller === 'true' || req.body.isTopSeller === true,
+      isTrending: req.body.isTrending === 'true' || req.body.isTrending === true,
       isBestSelling: req.body.isBestSelling === 'true' || req.body.isBestSelling === true,
-      isPreOrder:    req.body.isPreOrder    === 'true' || req.body.isPreOrder    === true,
-      isDealOfTheDay:req.body.isDealOfTheDay=== 'true' || req.body.isDealOfTheDay=== true,
+      isPreOrder: req.body.isPreOrder === 'true' || req.body.isPreOrder === true,
+      isDealOfTheDay: req.body.isDealOfTheDay === 'true' || req.body.isDealOfTheDay === true,
       // --
       createdBy: req.user.id
     };
@@ -303,24 +263,34 @@ const updateProduct = async (req, res) => {
       description: req.body.description || existingProduct.description,
       price: newPrice,
       salePrice: newSalePrice,
-      stock: req.body.stock ? parseInt(req.body.stock) : existingProduct.stock,
+      stock: req.body.stock !== undefined ? parseInt(req.body.stock, 10) : existingProduct.stock,
       image: imageUrl,
       genre: req.body.genre && req.body.genre.trim() !== '' ? req.body.genre : existingProduct.genre,
       rating: req.body.rating ? parseFloat(req.body.rating) : existingProduct.rating,
       badge: req.body.badge && req.body.badge.trim() !== '' ? req.body.badge : existingProduct.badge,
       type: req.body.type && req.body.type.trim() !== '' ? req.body.type : existingProduct.type,
+      region: req.body.region !== undefined
+        ? (req.body.region && req.body.region.trim() !== '' ? req.body.region : undefined)
+        : existingProduct.region,
+      tags: req.body.tags !== undefined
+        ? (Array.isArray(req.body.tags)
+          ? req.body.tags.filter(Boolean)
+          : typeof req.body.tags === 'string'
+            ? req.body.tags.split(',').map((tag) => tag.trim()).filter(Boolean)
+            : existingProduct.tags)
+        : existingProduct.tags,
       features: features || existingProduct.features,
       systemRequirements: systemRequirements || existingProduct.systemRequirements,
       releaseDate: req.body.releaseDate ? new Date(req.body.releaseDate) : existingProduct.releaseDate,
       developer: req.body.developer || existingProduct.developer,
       publisher: req.body.publisher || existingProduct.publisher,
       // -- Homepage toggles --
-      isFeatured:    req.body.isFeatured    !== undefined ? (req.body.isFeatured    === 'true' || req.body.isFeatured    === true) : existingProduct.isFeatured,
-      isTopSeller:   req.body.isTopSeller   !== undefined ? (req.body.isTopSeller   === 'true' || req.body.isTopSeller   === true) : existingProduct.isTopSeller,
-      isTrending:    req.body.isTrending    !== undefined ? (req.body.isTrending    === 'true' || req.body.isTrending    === true) : existingProduct.isTrending,
+      isFeatured: req.body.isFeatured !== undefined ? (req.body.isFeatured === 'true' || req.body.isFeatured === true) : existingProduct.isFeatured,
+      isTopSeller: req.body.isTopSeller !== undefined ? (req.body.isTopSeller === 'true' || req.body.isTopSeller === true) : existingProduct.isTopSeller,
+      isTrending: req.body.isTrending !== undefined ? (req.body.isTrending === 'true' || req.body.isTrending === true) : existingProduct.isTrending,
       isBestSelling: req.body.isBestSelling !== undefined ? (req.body.isBestSelling === 'true' || req.body.isBestSelling === true) : existingProduct.isBestSelling,
-      isPreOrder:    req.body.isPreOrder    !== undefined ? (req.body.isPreOrder    === 'true' || req.body.isPreOrder    === true) : existingProduct.isPreOrder,
-      isDealOfTheDay:req.body.isDealOfTheDay!== undefined ? (req.body.isDealOfTheDay=== 'true' || req.body.isDealOfTheDay=== true) : existingProduct.isDealOfTheDay,
+      isPreOrder: req.body.isPreOrder !== undefined ? (req.body.isPreOrder === 'true' || req.body.isPreOrder === true) : existingProduct.isPreOrder,
+      isDealOfTheDay: req.body.isDealOfTheDay !== undefined ? (req.body.isDealOfTheDay === 'true' || req.body.isDealOfTheDay === true) : existingProduct.isDealOfTheDay,
       // --
     };
 
@@ -418,9 +388,9 @@ const getFeaturedProducts = async (req, res) => {
       isActive: true,
       isFeatured: true
     })
-    .sort({ createdAt: -1 })
-    .limit(parseInt(limit))
-    .populate('createdBy', 'username');
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit))
+      .populate('createdBy', 'username');
 
     res.status(200).json({
       success: true,
@@ -520,54 +490,14 @@ const getPreOrderProducts = async (req, res) => {
 // @access  Private/Admin
 const getAdminProducts = async (req, res) => {
   try {
-    const {
-      page = 1,
-      limit = 50,
-      category,
-      platform,
-      search,
-      sort = 'createdAt',
-      order = 'desc'
-    } = req.query;
-
-    const filter = {};
-     
-    if (category) {
-      filter.category = category;
-    }
-    if (platform) {
-      filter.platform = platform;
-    }
-
-    if (search) {
-      filter.$text = { $search: search };
-    }
-
-    const sortOptions = {};
-    if (sort === 'price') {
-      sortOptions.price = order === 'desc' ? -1 : 1;
-    } else if (sort === 'rating') {
-      sortOptions.rating = order === 'desc' ? -1 : 1;
-    } else if (sort === 'name') {
-      sortOptions.title = order === 'desc' ? -1 : 1;
-    } else {
-      sortOptions.createdAt = order === 'desc' ? -1 : 1;
-    }
-
-    const products = await Product.find(filter)
-      .sort(sortOptions)
-      .limit(limit * 1)
-      .skip((page - 1) * limit)
-      .populate('createdBy', 'username');
-
-    const total = await Product.countDocuments(filter);
+    const { products, total, totalPages, parsedQuery } = await fetchCatalog(req.query, { admin: true });
 
     res.status(200).json({
       success: true,
       count: products.length,
       total,
-      totalPages: Math.ceil(total / limit),
-      currentPage: parseInt(page),
+      totalPages,
+      currentPage: parsedQuery.page,
       data: products
     });
 
@@ -596,4 +526,6 @@ module.exports = {
   getGiftCards,
   getSoftware,
   getAdminProducts
+  ,
+  getProductRecommendations
 };

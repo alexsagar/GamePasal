@@ -144,8 +144,6 @@ const Footer = () => {
               <span>We Accept:</span>
               <div className="payment-icons">
                 <span className="payment-icon">eSewa</span>
-                <span className="payment-icon">Khalti</span>
-                <span className="payment-icon">Bank Transfer</span>
               </div>
             </div>
           </div>

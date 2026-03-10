@@ -1,0 +1,266 @@
+/* Main Container */
+.gp-wallet-container {
+  min-height: calc(100vh - 4rem);
+  width: 100%;
+  background: linear-gradient(to bottom, #1a1a1a, #2d2d2d);
+  padding: 2rem 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.gp-wallet-wrapper {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  background-color: #262626;
+  border-radius: 1rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+}
+
+/* Header */
+.gp-wallet-header {
+  background-color: #1f1f1f;
+  padding: 2rem;
+  border-bottom: 1px solid #333;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.gp-wallet-icon {
+  width: 3rem;
+  height: 3rem;
+  background-color: rgba(255, 71, 87, 0.1);
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff4757;
+}
+
+.gp-wallet-title {
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+/* Steps */
+.gp-wallet-steps {
+  display: flex;
+  padding: 1rem 2rem;
+  border-bottom: 1px solid #333;
+  gap: 2rem;
+}
+
+.gp-wallet-step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #9ca3af;
+  font-size: 0.875rem;
+}
+
+.gp-wallet-step.active {
+  color: #ff4757;
+}
+
+.gp-wallet-step-number {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  background-color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.gp-wallet-step.active .gp-wallet-step-number {
+  background-color: #ff4757;
+  color: #fff;
+}
+
+/* Content */
+.gp-wallet-content {
+  padding: 2rem;
+}
+
+/* Amount Form */
+.gp-wallet-amount-form {
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.gp-wallet-amount-label {
+  color: #fff;
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.gp-wallet-amount-input {
+  width: 100%;
+  padding: 1rem;
+  background-color: #1f1f1f;
+  border: 2px solid #333;
+  border-radius: 0.75rem;
+  color: #fff;
+  font-size: 1.25rem;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.gp-wallet-amount-input:focus {
+  border-color: #ff4757;
+  outline: none;
+}
+
+.gp-wallet-amount-info {
+  margin-top: 1rem;
+  color: #9ca3af;
+  font-size: 0.875rem;
+  text-align: center;
+}
+
+/* QR Section */
+.gp-wallet-qr {
+  text-align: center;
+  padding: 2rem;
+  background-color: #1f1f1f;
+  border-radius: 1rem;
+  margin-bottom: 2rem;
+}
+
+.gp-wallet-qr img {
+  max-width: 280px;
+  height: auto;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Receipt Upload */
+.gp-wallet-receipt {
+  text-align: center;
+}
+
+.gp-wallet-receipt-label {
+  cursor: pointer;
+  display: block;
+  padding: 2rem;
+  background-color: #1f1f1f;
+  border: 2px dashed #333;
+  border-radius: 1rem;
+  transition: all 0.2s ease;
+}
+
+.gp-wallet-receipt-label:hover {
+  border-color: #ff4757;
+  background-color: #262626;
+  transform: translateY(-2px);
+}
+
+.gp-wallet-receipt-input {
+  display: none;
+}
+
+.gp-wallet-receipt-icon {
+  color: #ff4757;
+  margin-bottom: 1rem;
+}
+
+.gp-wallet-receipt-text {
+  color: #9ca3af;
+  font-size: 0.875rem;
+}
+
+/* Form Controls */
+.gp-wallet-controls {
+  margin-top: 2rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.gp-wallet-btn {
+  padding: 0.75rem 2rem;
+  border-radius: 0.75rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.gp-wallet-btn-primary {
+  background-color: #ff4757;
+  color: #fff;
+}
+
+.gp-wallet-btn-primary:hover:not(:disabled) {
+  background-color: #ff5e6a;
+  transform: translateY(-2px);
+}
+
+.gp-wallet-btn-secondary {
+  background-color: #333;
+  color: #fff;
+}
+
+.gp-wallet-btn-secondary:hover:not(:disabled) {
+  background-color: #404040;
+}
+
+.gp-wallet-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Error Message */
+.gp-wallet-error {
+  margin: 0 auto 2rem;
+  max-width: 400px;
+  padding: 1rem;
+  background-color: rgba(255, 71, 87, 0.1);
+  border-radius: 0.75rem;
+  color: #ff4757;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+}
+
+/* Loading States */
+.gp-wallet-loading {
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 640px) {
+  .gp-wallet-steps {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .gp-wallet-content {
+    padding: 1rem;
+  }
+
+  .gp-wallet-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

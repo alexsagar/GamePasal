@@ -1,0 +1,225 @@
+.wallet-container {
+  min-height: 100vh;
+  padding: 2rem 0;
+}
+
+.wallet-wrapper {
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.wallet-header {
+  margin-bottom: 2rem;
+}
+
+.wallet-title {
+  font-size: 2rem;
+  font-weight: bold;
+  color: var(--color-white);
+  margin-bottom: 0.5rem;
+}
+
+.wallet-subtitle {
+  color: var(--color-gray-400);
+}
+
+.wallet-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .wallet-layout {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.wallet-balance {
+  background-color: var(--bg-dark);
+  border: 1px solid var(--border-dark);
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+
+.wallet-balance-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-gray-300);
+  margin-bottom: 1rem;
+}
+
+.wallet-balance-amount {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: var(--color-white);
+  margin-bottom: 0.5rem;
+}
+
+.wallet-balance-currency {
+  font-size: 1rem;
+  color: var(--color-gray-400);
+}
+
+.wallet-topup {
+  background-color: var(--bg-dark);
+  border: 1px solid var(--border-dark);
+  border-radius: 1rem;
+  padding: 1.5rem;
+}
+
+.wallet-topup-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-white);
+  margin-bottom: 1.5rem;
+}
+
+.wallet-amount-options {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.wallet-amount-option {
+  padding: 1rem;
+  background-color: var(--bg-dark-lighter);
+  border: 2px solid var(--border-dark);
+  border-radius: 0.75rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.wallet-amount-option:hover {
+  border-color: var(--color-secondary);
+  background-color: var(--color-secondary-alpha);
+}
+
+.wallet-amount-option.selected {
+  border-color: var(--color-secondary);
+  background-color: var(--color-secondary-alpha);
+}
+
+.wallet-amount-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-white);
+  margin-bottom: 0.25rem;
+}
+
+.wallet-amount-bonus {
+  font-size: 0.875rem;
+  color: var(--color-primary);
+}
+
+.wallet-custom-amount {
+  margin-bottom: 1.5rem;
+}
+
+.wallet-custom-amount label {
+  display: block;
+  color: var(--color-gray-300);
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.wallet-custom-amount input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background-color: var(--bg-dark-lighter);
+  border: 1px solid var(--border-dark);
+  border-radius: 0.5rem;
+  color: var(--color-white);
+  font-size: 1rem;
+}
+
+.wallet-custom-amount input:focus {
+  outline: none;
+  border-color: var(--color-secondary);
+  box-shadow: 0 0 0 2px var(--color-secondary-alpha);
+}
+
+.wallet-payment-methods {
+  margin-bottom: 1.5rem;
+}
+
+.wallet-payment-methods-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-gray-300);
+  margin-bottom: 0.75rem;
+}
+
+.wallet-payment-method {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: var(--bg-dark-lighter);
+  border: 1px solid var(--border-dark);
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.wallet-payment-method:hover {
+  border-color: var(--color-secondary);
+}
+
+.wallet-payment-method.selected {
+  border-color: var(--color-secondary);
+  background-color: var(--color-secondary-alpha);
+}
+
+.wallet-payment-method-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-dark);
+  border-radius: 0.5rem;
+}
+
+.wallet-payment-method-details {
+  flex: 1;
+}
+
+.wallet-payment-method-name {
+  font-weight: 500;
+  color: var(--color-white);
+}
+
+.wallet-payment-method-description {
+  font-size: 0.875rem;
+  color: var(--color-gray-400);
+}
+
+.wallet-submit {
+  width: 100%;
+  padding: 1rem;
+  background-color: var(--color-secondary);
+  color: var(--color-white);
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: background-color 0.2s;
+}
+
+.wallet-submit:hover {
+  background-color: var(--color-secondary-dark);
+}
+
+.wallet-submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.wallet-error {
+  color: var(--color-primary);
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}

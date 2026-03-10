@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { 
+import {
   Eye, EyeOff, Mail, Lock, User, Phone, Gamepad2,
-  Facebook, Mail as MailIcon
+  Facebook, Mail as MailIcon, CheckCircle2, XCircle
 } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
 import toast from 'react-hot-toast';
@@ -22,6 +22,20 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Password requirements state
+  const getPasswordStrength = (pass) => {
+    return {
+      length: pass.length >= 8,
+      uppercase: /[A-Z]/.test(pass),
+      lowercase: /[a-z]/.test(pass),
+      number: /[0-9]/.test(pass),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(pass),
+    };
+  };
+
+  const passStrength = getPasswordStrength(formData.password);
+  const isPasswordValid = Object.values(passStrength).every(Boolean);
 
   const { register, verifyOTP, googleLogin, facebookLogin } = useAuth();
   const navigate = useNavigate();
@@ -42,8 +56,8 @@ const Signup = () => {
       setLoading(false);
       return;
     }
-    if (formData.password.length < 8) {
-      toast.error('Password must be at least 8 characters long and contain uppercase, lowercase, number, and special character');
+    if (!isPasswordValid) {
+      toast.error('Please fulfill all password strength requirements.');
       setLoading(false);
       return;
     }
@@ -88,16 +102,16 @@ const Signup = () => {
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       setLoading(true);
-      
+
       // Decode the JWT token to get user info
       const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
         headers: {
           Authorization: `Bearer ${credentialResponse.credential}`,
         },
       });
-      
+
       const googleUser = await response.json();
-      
+
       const result = await googleLogin({
         idToken: credentialResponse.credential,
         email: googleUser.email,
@@ -126,7 +140,7 @@ const Signup = () => {
   const handleFacebookLogin = async () => {
     try {
       setLoading(true);
-      
+
       // Wait for Facebook SDK to load
       const waitForFB = () => {
         return new Promise((resolve) => {
@@ -134,7 +148,7 @@ const Signup = () => {
             resolve();
             return;
           }
-          
+
           const checkFB = () => {
             if (window.FB) {
               resolve();
@@ -233,8 +247,8 @@ const Signup = () => {
               />
             </div>
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className="btn btn-primary auth-btn"
               disabled={loading || otp.length !== 6}
             >
@@ -245,8 +259,8 @@ const Signup = () => {
           <div className="auth-footer">
             <p>
               Didn't receive the code?{' '}
-              <button 
-                onClick={resendOTP} 
+              <button
+                onClick={resendOTP}
                 className="auth-link"
                 disabled={loading}
               >
@@ -254,8 +268,8 @@ const Signup = () => {
               </button>
             </p>
             <p>
-              <button 
-                onClick={() => setStep(1)} 
+              <button
+                onClick={() => setStep(1)}
                 className="auth-link"
               >
                 Back to Registration
@@ -350,6 +364,32 @@ const Signup = () => {
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
             </div>
+
+            {/* Password Feedback */}
+            {formData.password && (
+              <div className="password-requirements">
+                <div className={`req-item ${passStrength.length ? 'met' : 'unmet'}`}>
+                  {passStrength.length ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
+                  <span>At least 8 characters</span>
+                </div>
+                <div className={`req-item ${passStrength.uppercase ? 'met' : 'unmet'}`}>
+                  {passStrength.uppercase ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
+                  <span>One uppercase letter</span>
+                </div>
+                <div className={`req-item ${passStrength.lowercase ? 'met' : 'unmet'}`}>
+                  {passStrength.lowercase ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
+                  <span>One lowercase letter</span>
+                </div>
+                <div className={`req-item ${passStrength.number ? 'met' : 'unmet'}`}>
+                  {passStrength.number ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
+                  <span>One number</span>
+                </div>
+                <div className={`req-item ${passStrength.special ? 'met' : 'unmet'}`}>
+                  {passStrength.special ? <CheckCircle2 size={12} /> : <XCircle size={12} />}
+                  <span>One special character (!@#$% etc.)</span>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="form-group">
@@ -386,8 +426,8 @@ const Signup = () => {
             </label>
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="btn btn-primary auth-btn"
             disabled={loading}
           >
@@ -396,34 +436,34 @@ const Signup = () => {
         </form>
 
         {/* Social Media Login Options */}
-        <div className="social-login-section">
-          <div className="divider">
-            <span>or</span>
-          </div>
-          
-          <div className="social-buttons">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={handleGoogleError}
-              useOneTap={false}
-              theme="outline"
-              size="large"
-              width="300"
-              text="continue_with"
-              shape="rectangular"
-              logo_alignment="left"
-            />
-            
-            <button 
-              type="button" 
-              className="btn btn-social btn-facebook"
-              onClick={handleFacebookLogin}
-              disabled={loading}
-            >
+        <div className="auth-divider">
+          <span>or continue with</span>
+        </div>
+
+        <div className="social-auth">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            useOneTap={false}
+            theme="outline"
+            size="large"
+            width="300"
+            text="continue_with"
+            shape="rectangular"
+            logo_alignment="left"
+          />
+
+          <button
+            type="button"
+            className="social-btn facebook"
+            onClick={handleFacebookLogin}
+            disabled={loading}
+          >
+            <div className="social-icon">
               <Facebook size={20} />
-              Continue with Facebook
-            </button>
-          </div>
+            </div>
+            Continue with Facebook
+          </button>
         </div>
 
         <div className="auth-footer">

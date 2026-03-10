@@ -1,0 +1,41 @@
+.gp-receipt-uploader {
+  margin-top: 2rem;
+  width: 100%;
+}
+
+.gp-receipt-label {
+  cursor: pointer;
+  display: block;
+}
+
+.gp-receipt-input {
+  display: none;
+}
+
+.gp-receipt-button {
+  background-color: #2d2d2d;
+  border: 2px dashed #404040;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  color: #9ca3af;
+  transition: all 0.2s ease;
+}
+
+.gp-receipt-button:hover {
+  border-color: #ff4757;
+  background-color: #333;
+  color: #fff;
+}
+
+.gp-receipt-button svg {
+  color: #ff4757;
+}
+
+.gp-receipt-button span {
+  font-size: 0.875rem;
+  font-weight: 500;
+}

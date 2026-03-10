@@ -11,12 +11,8 @@ const PaymentFailure = () => {
     navigate('/');
   };
 
-  const handleGoToProfile = () => {
-    navigate('/profile/wallet');
-  };
-
   const handleRetry = () => {
-    navigate('/profile/wallet');
+    navigate('/checkout');
   };
 
   // Get error message from URL parameters
@@ -42,8 +38,8 @@ const PaymentFailure = () => {
               <RefreshCw size={16} />
               Try Again
             </button>
-            <button className="btn btn-primary" onClick={handleGoToProfile}>
-              Check Wallet
+            <button className="btn btn-primary" onClick={() => navigate('/cart')}>
+              Back to Cart
             </button>
           </div>
         </div>

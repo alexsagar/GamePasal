@@ -180,7 +180,7 @@ const Home = () => {
     <div className="home">
       <SEO
         title="Buy Game Gift Cards in Nepal | GamePasal"
-        description="Buy PlayStation, Xbox, Steam, and PC game gift cards in Nepal with instant delivery. Pay via eSewa, Khalti, or bank transfer at GamePasal."
+        description="Buy PlayStation, Xbox, Steam, and PC game gift cards in Nepal with instant delivery. Pay via Fonepay QR or bank transfer at GamePasal."
         keywords="game gift cards Nepal, buy PlayStation gift cards, Xbox gift cards Nepal, Steam wallet Nepal, PC game top-up Nepal"
         canonical="https://www.gamepasal.com/"
       />
@@ -242,7 +242,7 @@ const Home = () => {
 
             {/* PC Games Card */}
             <div className="bento-card game-nav-card">
-              <Link to="/products?category=PC" className="game-nav-link">
+              <Link to="/products/pc" className="game-nav-link">
                 <div className="game-nav-wrapper">
                   <div className="game-nav-icon">
                     <Monitor size={32} />
@@ -255,7 +255,7 @@ const Home = () => {
 
             {/* PlayStation Games Card */}
             <div className="bento-card game-nav-card">
-              <Link to="/products?category=PlayStation" className="game-nav-link">
+              <Link to="/products/playstation" className="game-nav-link">
                 <div className="game-nav-wrapper">
                   <div className="game-nav-icon">
                     <Monitor size={32} />
@@ -268,7 +268,7 @@ const Home = () => {
 
             {/* Xbox Games Card */}
             <div className="bento-card game-nav-card">
-              <Link to="/products?category=Xbox" className="game-nav-link">
+              <Link to="/products/xbox" className="game-nav-link">
                 <div className="game-nav-wrapper">
                   <div className="game-nav-icon">
                     <Monitor size={32} />
@@ -368,7 +368,7 @@ const Home = () => {
               </div>
             </div>
             <div className="header-actions">
-              <Link to="/products?sort=bestselling" className="view-all-btn">
+              <Link to="/products?isTopSeller=true" className="view-all-btn">
                 View All
                 <ChevronRight size={16} />
               </Link>
@@ -447,7 +447,7 @@ const Home = () => {
               <h2 className="section-title">Trending Products</h2>
             </div>
             <div className="header-controls">
-              <Link to="/products?sort=trending" className="view-all-link">VIEW ALL</Link>
+              <Link to="/products?isTrending=true" className="view-all-link">VIEW ALL</Link>
               <div className="scroll-controls">
                 <button className="scroll-btn" onClick={() => scrollRow(trendingRef, -1)} aria-label="Back"><ChevronLeft size={18} /></button>
                 <button className="scroll-btn" onClick={() => scrollRow(trendingRef, 1)} aria-label="Next"><ChevronRight size={18} /></button>
@@ -471,7 +471,7 @@ const Home = () => {
           <div className="section-header section-header-with-controls">
             <h2 className="section-title">Best Selling</h2>
             <div className="header-controls">
-              <Link to="/products?sort=bestselling" className="view-all-link">VIEW ALL</Link>
+              <Link to="/products?isBestSelling=true" className="view-all-link">VIEW ALL</Link>
               <div className="scroll-controls">
                 <button className="scroll-btn" onClick={() => scrollRow(bestRef, -1)} aria-label="Back"><ChevronLeft size={18} /></button>
                 <button className="scroll-btn" onClick={() => scrollRow(bestRef, 1)} aria-label="Next"><ChevronRight size={18} /></button>
@@ -498,7 +498,7 @@ const Home = () => {
               <h2 className="section-title">Pre-Order Now</h2>
             </div>
             <div className="header-controls">
-              <Link to="/products?category=preorder" className="view-all-link">VIEW ALL</Link>
+              <Link to="/products/preorder" className="view-all-link">VIEW ALL</Link>
               <div className="scroll-controls">
                 <button className="scroll-btn" onClick={() => scrollRow(preorderRef, -1)} aria-label="Back"><ChevronLeft size={18} /></button>
                 <button className="scroll-btn" onClick={() => scrollRow(preorderRef, 1)} aria-label="Next"><ChevronRight size={18} /></button>
@@ -669,7 +669,7 @@ const Home = () => {
           )}
         </div>
       </section>
-        <Benefits ctaLabel="Shop Now" ctaHref="/products/PC" />
+        <Benefits ctaLabel="Shop Now" ctaHref="/products/pc" />
     </div>
   );
 };

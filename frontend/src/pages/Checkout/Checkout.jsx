@@ -2,28 +2,26 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
-import { 
-  CreditCard, 
-  Smartphone, 
-  Building, 
+import {
+  Smartphone,
   ArrowLeft,
   CheckCircle,
-  AlertCircle,
-  Wallet as WalletIcon
+  AlertCircle
 } from 'lucide-react';
-import api, { checkoutAPI } from '../../services/api';
+import { checkoutAPI } from '../../services/api';
+import paymentAPI from '../../services/paymentAPI';
 import './Checkout.css';
 
 const Checkout = () => {
   const { cartItems, getCartTotal, clearCart } = useCart();
-  const { user, walletBalancePaisa } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-  
+
   const [step, setStep] = useState(1); // 1: Details, 2: Payment, 3: Confirmation
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [orderData, setOrderData] = useState(null);
-  
+
   const [formData, setFormData] = useState({
     // Shipping/Contact Details
     fullName: user?.username || '',
@@ -33,13 +31,15 @@ const Checkout = () => {
     city: '',
     country: 'Nepal',
     zipCode: '',
-    
+
     // Payment
-    paymentMethod: 'Wallet',
-    
+    paymentMethod: 'eSewa',
+
     // Notes
     notes: ''
   });
+
+
 
   const handleInputChange = (e) => {
     setFormData({
@@ -51,16 +51,16 @@ const Checkout = () => {
 
   const handleStepOne = (e) => {
     e.preventDefault();
-    
+
     // Validate required fields
     const required = ['fullName', 'email', 'phone'];
     const missing = required.filter(field => !formData[field]);
-    
+
     if (missing.length > 0) {
       setError('Please fill in all required fields');
       return;
     }
-    
+
     setStep(2);
   };
 
@@ -70,58 +70,64 @@ const Checkout = () => {
     setError('');
 
     try {
-      const isWalletOnly = formData.paymentMethod === 'Wallet' && walletBalancePaisa >= Math.round(getCartTotal() * 100);
-      const walletAmountPaisa = isWalletOnly ? Math.round(getCartTotal() * 100) : 0;
-      const gatewayMap = { eSewa: 'ESEWA', Khalti: 'KHALTI', BankTransfer: null };
-      const gateway = gatewayMap[formData.paymentMethod] || null;
-
       const response = await checkoutAPI.createIntent({
         items: cartItems.map(i => ({ productId: i._id, quantity: i.quantity })),
-        shippingId: null,
-        paymentMethod: isWalletOnly ? 'WALLET' : 'GATEWAY',
-        walletAmountPaisa,
-        gateway,
+        shippingAddress: {
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city,
+          country: formData.country,
+          zipCode: formData.zipCode
+        },
+        paymentMethod: 'GATEWAY',
+        gateway: 'ESEWA',
+        notes: formData.notes,
         idempotencyKey: `${Date.now()}-${Math.random().toString(36).slice(2)}`
       });
 
       const data = response.data?.data;
-      if (data?.paid) {
-        setOrderData({ orderNumber: 'PAID', totalAmount: getCartTotal(), paymentMethod: 'Wallet' });
-        setStep(3);
-        clearCart();
-        return;
-      }
-      if (data?.gateway === 'ESEWA' && data?.formData) {
-        // For eSewa, submit form data
-        const form = document.createElement('form');
-        form.method = 'POST';
-        form.action = data.paymentUrl;
-        form.target = '_self';
-        
-        Object.keys(data.formData).forEach(key => {
-          const input = document.createElement('input');
-          input.type = 'hidden';
-          input.name = key;
-          input.value = data.formData[key];
-          form.appendChild(input);
-        });
-        
-        document.body.appendChild(form);
-        form.submit();
-        return;
-      }
-      
-      if (data?.redirectUrl) {
-        // For gateway payments, redirect to payment gateway
-        if (gateway && data.redirectUrl.includes('epay') || data.redirectUrl.includes('khalti')) {
-          window.location.href = data.redirectUrl;
-          return;
+
+      if (formData.paymentMethod === 'eSewa') {
+        const esewaRes = await paymentAPI.initiateEsewa(data.orderId);
+        const esewaData = esewaRes.data?.data;
+
+        if (esewaData && esewaData.signature) {
+          // Create a dynamic form to submit to eSewa
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = esewaData.gateway_url;
+
+          const fields = {
+            amount: esewaData.amount,
+            tax_amount: esewaData.tax_amount,
+            total_amount: esewaData.total_amount,
+            transaction_uuid: esewaData.transaction_uuid,
+            product_code: esewaData.product_code,
+            product_service_charge: esewaData.product_service_charge,
+            product_delivery_charge: esewaData.product_delivery_charge,
+            success_url: esewaData.success_url,
+            failure_url: esewaData.failure_url,
+            signed_field_names: esewaData.signed_field_names,
+            signature: esewaData.signature
+          };
+
+          for (const key in fields) {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = key;
+            input.value = fields[key];
+            form.appendChild(input);
+          }
+
+          document.body.appendChild(form);
+          form.submit();
+          return; // Stop execution as the page will redirect
+        } else {
+          throw new Error('Failed to generate eSewa payment signature');
         }
-        // For other redirects, handle normally
-        window.location.href = data.redirectUrl;
-        return;
       }
-      setError('Failed to initiate checkout');
     } catch (error) {
       console.error('Order creation error:', error);
       setError(error.response?.data?.message || 'Failed to create order');
@@ -130,35 +136,12 @@ const Checkout = () => {
     }
   };
 
-  const walletBalanceNrs = (walletBalancePaisa || 0) / 100;
-  const cartTotalNrs = getCartTotal();
-  const cartTotalPaisa = Math.round(cartTotalNrs * 100);
-
   const paymentMethods = [
-    {
-      id: 'Wallet',
-      name: 'Wallet (GP Credits)',
-      icon: WalletIcon,
-      description: `Use GP Credits to pay for this order. Balance: NPR ${walletBalanceNrs.toFixed(2)}`,
-      disabled: walletBalancePaisa <= 0 || walletBalancePaisa < cartTotalPaisa
-    },
     {
       id: 'eSewa',
       name: 'eSewa',
-      icon: CreditCard,
-      description: 'Pay securely with eSewa digital wallet'
-    },
-    {
-      id: 'Khalti',
-      name: 'Khalti',
       icon: Smartphone,
-      description: 'Pay with Khalti mobile payment'
-    },
-    {
-      id: 'BankTransfer',
-      name: 'Bank Transfer',
-      icon: Building,
-      description: 'Direct bank transfer payment'
+      description: 'Pay instantly via eSewa digital wallet'
     }
   ];
 
@@ -170,7 +153,7 @@ const Checkout = () => {
             <AlertCircle size={64} />
             <h2>Your cart is empty</h2>
             <p>Add some products to your cart before checkout</p>
-            <button 
+            <button
               className="btn btn-primary"
               onClick={() => navigate('/products')}
             >
@@ -186,14 +169,14 @@ const Checkout = () => {
     <div className="checkout-page">
       <div className="container">
         <div className="checkout-header">
-          <button 
+          <button
             className="back-btn"
             onClick={() => step > 1 ? setStep(step - 1) : navigate('/cart')}
           >
             <ArrowLeft size={20} />
             {step > 1 ? 'Back' : 'Back to Cart'}
           </button>
-          
+
           <div className="checkout-steps">
             <div className={`step ${step >= 1 ? 'active' : ''}`}>
               <span>1</span>
@@ -214,9 +197,9 @@ const Checkout = () => {
           <div className="checkout-content">
             <div className="checkout-main">
               <h2>Contact & Delivery Information</h2>
-              
+
               {error && <div className="error-message">{error}</div>}
-              
+
               <form onSubmit={handleStepOne} className="checkout-form">
                 <div className="form-section">
                   <h3>Contact Information</h3>
@@ -242,7 +225,7 @@ const Checkout = () => {
                       />
                     </div>
                   </div>
-                  
+
                   <div className="form-group">
                     <label>Phone Number *</label>
                     <input
@@ -260,7 +243,7 @@ const Checkout = () => {
                   <p className="section-note">
                     Digital products will be delivered via email. Physical address is optional.
                   </p>
-                  
+
                   <div className="form-group">
                     <label>Address</label>
                     <input
@@ -271,7 +254,7 @@ const Checkout = () => {
                       placeholder="Street address"
                     />
                   </div>
-                  
+
                   <div className="form-row">
                     <div className="form-group">
                       <label>City</label>
@@ -290,11 +273,11 @@ const Checkout = () => {
                         onChange={handleInputChange}
                       >
                         <option value="Nepal">Nepal</option>
-                        
+
                       </select>
                     </div>
                   </div>
-                  
+
                   <div className="form-group">
                     <label>ZIP Code</label>
                     <input
@@ -336,9 +319,9 @@ const Checkout = () => {
           <div className="checkout-content">
             <div className="checkout-main">
               <h2>Payment Method</h2>
-              
+
               {error && <div className="error-message">{error}</div>}
-              
+
               <form onSubmit={handlePlaceOrder} className="payment-form">
                 <div className="payment-methods">
                   {paymentMethods.map((method) => {
@@ -361,32 +344,25 @@ const Checkout = () => {
                           <p className="payment-method-description">
                             {method.description}
                           </p>
-                          {method.id === 'Wallet' && method.disabled && (
-                            <p className="payment-method-description" style={{ color:'#f87171' }}>
-                              Insufficient wallet balance for this order.
-                            </p>
-                          )}
                         </div>
                       </label>
                     );
                   })}
                 </div>
 
-                {/* No manual wallet amount field; wallet-only is automatic. */}
-
                 <div className="payment-note">
                   <AlertCircle size={20} />
                   <div>
                     <h4>Payment Processing</h4>
                     <p>
-                      After placing your order, you will be redirected to complete payment. 
+                      After placing your order, you will be redirected to complete payment.
                       Digital products will be delivered to your email once payment is confirmed.
                     </p>
                   </div>
                 </div>
 
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="btn btn-primary btn-full"
                   disabled={loading}
                 >
@@ -408,7 +384,7 @@ const Checkout = () => {
               <CheckCircle size={64} />
               <h2>Order Placed Successfully!</h2>
               <p>Thank you for your order. We've received your request and will process it shortly.</p>
-              
+
               <div className="order-details">
                 <h3>Order Details</h3>
                 <div className="order-info">
@@ -442,13 +418,13 @@ const Checkout = () => {
               </div>
 
               <div className="success-actions">
-                <button 
+                <button
                   className="btn btn-primary"
                   onClick={() => navigate('/profile')}
                 >
                   View Order History
                 </button>
-                <button 
+                <button
                   className="btn btn-secondary"
                   onClick={() => navigate('/products')}
                 >
@@ -458,6 +434,7 @@ const Checkout = () => {
             </div>
           </div>
         )}
+
       </div>
     </div>
   );
@@ -468,7 +445,7 @@ const OrderSummary = ({ cartItems, total }) => {
   return (
     <div className="order-summary">
       <h3>Order Summary</h3>
-      
+
       <div className="order-items">
         {cartItems.map((item) => (
           <div key={item._id} className="order-item">

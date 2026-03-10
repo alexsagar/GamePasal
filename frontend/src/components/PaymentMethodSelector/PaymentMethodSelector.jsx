@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { CreditCard, Smartphone, QrCode, Check } from 'lucide-react';
+import React from 'react';
+import { Smartphone, QrCode, Check } from 'lucide-react';
 import './PaymentMethodSelector.css';
 
 const PaymentMethodSelector = ({ 
@@ -10,8 +10,6 @@ const PaymentMethodSelector = ({
   loading = false,
   disabled = false 
 }) => {
-  const [customAmount, setCustomAmount] = useState('');
-
   const paymentMethods = [
     {
       id: 'wallet',
@@ -22,24 +20,8 @@ const PaymentMethodSelector = ({
       color: '#00d4aa'
     },
     {
-      id: 'esewa',
-      name: 'eSewa',
-      description: 'Pay securely with eSewa',
-      icon: CreditCard,
-      available: true,
-      color: '#4a90e2'
-    },
-    {
-      id: 'khalti',
-      name: 'Khalti',
-      description: 'Pay with Khalti digital wallet',
-      icon: Smartphone,
-      available: true,
-      color: '#5c2d91'
-    },
-    {
-      id: 'esewa-qr',
-      name: 'eSewa QR',
+      id: 'fonepay-qr',
+      name: 'Fonepay QR',
       description: 'Scan QR code and upload receipt',
       icon: QrCode,
       available: true,
@@ -57,10 +39,6 @@ const PaymentMethodSelector = ({
     if (onPaymentInitiate && selectedMethod) {
       onPaymentInitiate(selectedMethod);
     }
-  };
-
-  const getMethodIcon = (IconComponent) => {
-    return <IconComponent size={24} />;
   };
 
   return (
@@ -82,7 +60,7 @@ const PaymentMethodSelector = ({
               }}
             >
               <div className="payment-method-icon" style={{ color: method.color }}>
-                {getMethodIcon(IconComponent)}
+                <IconComponent size={24} />
               </div>
               
               <div className="payment-method-content">
@@ -110,7 +88,7 @@ const PaymentMethodSelector = ({
         <div className="payment-method-actions">
           <div className="payment-amount-display">
             <span className="amount-label">Amount:</span>
-            <span className="amount-value">NRS {amount ? (amount / 100).toFixed(2) : '0.00'}</span>
+            <span className="amount-value">NPR {amount ? (amount / 100).toFixed(2) : '0.00'}</span>
           </div>
 
           <button
@@ -126,9 +104,7 @@ const PaymentMethodSelector = ({
             ) : (
               <>
                 {selectedMethod === 'wallet' && 'Pay with Wallet'}
-                {selectedMethod === 'esewa' && 'Pay with eSewa'}
-                {selectedMethod === 'khalti' && 'Pay with Khalti'}
-                {selectedMethod === 'esewa-qr' && 'Generate QR Code'}
+                {selectedMethod === 'fonepay-qr' && 'Proceed to QR Payment'}
               </>
             )}
           </button>
@@ -138,12 +114,12 @@ const PaymentMethodSelector = ({
       {selectedMethod && selectedMethod !== 'wallet' && (
         <div className="payment-method-info">
           <div className="info-card">
-            <h5>Payment Security</h5>
+            <h5>Payment Process</h5>
             <ul>
-              <li>✓ SSL encrypted transactions</li>
-              <li>✓ PCI DSS compliant</li>
-              <li>✓ Real-time verification</li>
-              <li>✓ Instant wallet credit</li>
+              <li>✓ Scan Fonepay QR code</li>
+              <li>✓ Pay exact amount</li>
+              <li>✓ Upload receipt screenshot</li>
+              <li>✓ Admin verification within 24hrs</li>
             </ul>
           </div>
         </div>

@@ -7,7 +7,7 @@
 
 /* Hero Bento Section */
 .hero-bento {
-  padding: 40px 0;
+  padding: 0 0 40px 0;
   background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
 }
 
@@ -58,7 +58,17 @@
   grid-column: 1 / 13;
   grid-row: 1;
   padding: 0;
-  min-height: 400px;
+  min-height: 600px;
+  /* Stretch to full screen width */
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+}
+
+.bento-hero-main .hero-background {
+  border-radius: 0;
 }
 
 .hero-card-content {
@@ -86,7 +96,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(135deg, rgba(0,0,0,0.6), rgba(255,86,97,0.15));
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.6), rgba(255, 86, 97, 0.15));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -253,20 +263,20 @@
     max-width: 1000px;
     gap: 16px;
   }
-  
+
   .bento-hero-main {
     grid-column: 1 / 13;
     grid-row: 1;
     min-height: 350px;
   }
-  
+
   .game-nav-card {
     grid-column: span 2;
     aspect-ratio: 1;
     min-height: 180px;
     max-width: 240px;
   }
-  
+
   .game-nav-card:nth-child(2),
   .game-nav-card:nth-child(3),
   .game-nav-card:nth-child(4),
@@ -275,11 +285,11 @@
   .game-nav-card:nth-child(7) {
     justify-self: center;
   }
-  
+
   .hero-title {
     font-size: 36px;
   }
-  
+
   .hero-subtitle {
     font-size: 18px;
   }
@@ -289,23 +299,23 @@
   .hero-bento {
     padding: 24px 0;
   }
-  
+
   .bento-grid {
     grid-template-columns: repeat(3, 1fr);
     gap: 16px;
     min-height: auto;
   }
-  
+
   .bento-card {
     padding: 20px;
   }
-  
+
   .bento-hero-main {
     grid-column: 1 / 4;
     grid-row: 1;
     min-height: 300px;
   }
-  
+
   .game-nav-card {
     grid-column: span 1;
     grid-row: 2;
@@ -313,7 +323,7 @@
     min-height: 160px;
     max-width: 200px;
   }
-  
+
   .game-nav-card:nth-child(2),
   .game-nav-card:nth-child(3),
   .game-nav-card:nth-child(4),
@@ -322,30 +332,30 @@
   .game-nav-card:nth-child(7) {
     justify-self: center;
   }
-  
+
   .hero-title {
     font-size: 28px;
   }
-  
+
   .hero-subtitle {
     font-size: 16px;
   }
-  
+
   .game-nav-wrapper {
     padding: 16px 12px !important;
     min-height: 120px !important;
   }
-  
+
   .game-nav-icon {
     width: 40px !important;
     height: 40px !important;
     margin-bottom: 10px !important;
   }
-  
+
   .game-nav-title {
     font-size: 14px !important;
   }
-  
+
   .game-nav-desc {
     font-size: 11px !important;
   }
@@ -357,17 +367,17 @@
     gap: 12px;
     min-height: auto;
   }
-  
+
   .bento-card {
     padding: 16px;
   }
-  
+
   .bento-hero-main {
     grid-column: 1 / 3;
     grid-row: 1;
     min-height: 250px;
   }
-  
+
   .game-nav-card {
     grid-column: span 1;
     grid-row: 2;
@@ -375,7 +385,7 @@
     min-height: 140px;
     max-width: 180px;
   }
-  
+
   .game-nav-card:nth-child(2),
   .game-nav-card:nth-child(3),
   .game-nav-card:nth-child(4),
@@ -384,34 +394,34 @@
   .game-nav-card:nth-child(7) {
     justify-self: center;
   }
-  
+
   .hero-title {
     font-size: 24px;
   }
-  
+
   .hero-subtitle {
     font-size: 14px;
   }
-  
+
   .game-nav-wrapper {
     padding: 16px 12px !important;
     min-height: 110px !important;
   }
-  
+
   .game-nav-icon {
     width: 36px !important;
     height: 36px !important;
     margin-bottom: 8px !important;
   }
-  
+
   .game-nav-title {
     font-size: 13px !important;
   }
-  
+
   .game-nav-desc {
     font-size: 10px !important;
   }
-  
+
 }
 
 /* Legacy Hero Section (keeping for reference) */
@@ -443,12 +453,14 @@
 
 .hero-overlay {
   position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(0,0,0,0.6), rgba(255,86,97,0.15));
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.6), rgba(255, 86, 97, 0.15));
   z-index: 3;
 }
 
@@ -494,7 +506,7 @@
 
 .hero-cta,
 .btn.btn-primary {
-    padding: 16px 32px;
+  padding: 16px 32px;
   background: #ff5661;
   color: #fff;
   border: none;
@@ -529,8 +541,13 @@
   transform: translateY(-50%) scale(1.1);
 }
 
-.hero-nav.prev { left: 20px; }
-.hero-nav.next { right: 20px; }
+.hero-nav.prev {
+  left: 20px;
+}
+
+.hero-nav.next {
+  right: 20px;
+}
 
 .hero-dots {
   position: absolute;
@@ -575,7 +592,9 @@
   gap: 12px;
 }
 
-.section-icon { color: var(--accent-pink); }
+.section-icon {
+  color: var(--accent-pink);
+}
 
 .section-title {
   font-size: 32px;
@@ -597,7 +616,9 @@
   transition: color 0.3s;
 }
 
-.view-all-link:hover { color: var(--accent-pink-dark); }
+.view-all-link:hover {
+  color: var(--accent-pink-dark);
+}
 
 /* Featured Section & Carousel */
 .featured-section {
@@ -612,10 +633,19 @@
   margin-bottom: 32px;
 }
 
-.featured-title { font-size: 32px; color: #fff; }
-.featured-subtitle { color: #cccccc; }
+.featured-title {
+  font-size: 32px;
+  color: #fff;
+}
 
-.featured-carousel { position: relative; }
+.featured-subtitle {
+  color: #cccccc;
+}
+
+.featured-carousel {
+  position: relative;
+}
+
 .featured-scroll-container {
   display: flex;
   gap: 24px;
@@ -624,7 +654,10 @@
   padding: 8px 0 24px 0;
   scrollbar-width: none;
 }
-.featured-scroll-container::-webkit-scrollbar { display: none; }
+
+.featured-scroll-container::-webkit-scrollbar {
+  display: none;
+}
 
 .featured-buy-btn {
   margin-top: 6px;
@@ -638,6 +671,7 @@
   cursor: pointer;
   transition: background 0.2s;
 }
+
 .featured-buy-btn:hover {
   background: #ff2e49;
 }
@@ -654,46 +688,123 @@
   position: relative;
   cursor: pointer;
 }
+
 .featured-game-card:hover {
   border-color: var(--accent-pink);
   transform: translateY(-8px);
-  box-shadow: 0 20px 40px rgba(255,86,97,0.16);
+  box-shadow: 0 20px 40px rgba(255, 86, 97, 0.16);
 }
+
 .featured-game-image {
   width: 100%;
   height: 200px;
   object-fit: cover;
   transition: transform 0.3s;
 }
-.featured-game-card:hover .featured-game-image { transform: scale(1.05); }
+
+.featured-game-card:hover .featured-game-image {
+  transform: scale(1.05);
+}
 
 .featured-game-badges {
-  position: absolute; top: 16px; left: 16px; display: flex; flex-direction: column; gap: 8px;
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
-.featured-badge { padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; text-transform: uppercase; color: white; }
-.featured-badge.sale { background: var(--accent-pink); }
-.featured-badge.hot { background: #ff6b35; }
-.featured-badge.preorder { background: #5352ed; }
+
+.featured-badge {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: white;
+}
+
+.featured-badge.sale {
+  background: var(--accent-pink);
+}
+
+.featured-badge.hot {
+  background: #ff6b35;
+}
+
+.featured-badge.preorder {
+  background: #5352ed;
+}
 
 .featured-discount-badge {
-  position: absolute; top: 16px; right: 16px; background: var(--accent-pink);
-  color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: var(--accent-pink);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
 }
+
 .featured-game-info {
-  padding: 20px; height: 150px; display: flex; flex-direction: column; justify-content: space-between;
+  padding: 20px;
+  height: 150px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
+
 .featured-game-platform {
-  background: #333; color: #cccccc; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500;
-  width: fit-content; margin-bottom: 8px;
+  background: #333;
+  color: #cccccc;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  width: fit-content;
+  margin-bottom: 8px;
 }
+
 .featured-game-title {
-  font-size: 18px; font-weight: 600; color: #fff; margin-bottom: 8px; line-height: 1.3;
-  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  font-size: 18px;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 8px;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
-.featured-game-rating { display: flex; align-items: center; gap: 4px; margin-bottom: 12px; font-size: 14px; color: #cccccc; }
-.featured-game-price { display: flex; align-items: center; gap: 8px; }
-.featured-current-price { font-size: 18px; font-weight: 700; color: var(--accent-pink); }
-.featured-original-price { font-size: 14px; color: #666; text-decoration: line-through; }
+
+.featured-game-rating {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #cccccc;
+}
+
+.featured-game-price {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.featured-current-price {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent-pink);
+}
+
+.featured-original-price {
+  font-size: 14px;
+  color: #666;
+  text-decoration: line-through;
+}
 
 
 /* Fix for Swiper showing blank slides on desktop */
@@ -709,7 +820,7 @@
 /* Swiper Carousel Navigation */
 .swiper-button-prev,
 .swiper-button-next {
-  background: rgba(0,0,0,0.7);
+  background: rgba(0, 0, 0, 0.7);
   color: #fff;
   border-radius: 50%;
   width: 44px;
@@ -719,6 +830,7 @@
   justify-content: center;
   transition: background 0.2s;
 }
+
 .swiper-button-prev:hover,
 .swiper-button-next:hover {
   background: var(--accent-pink);
@@ -1049,11 +1161,23 @@
 }
 
 .gift-cards-section,
-.best-selling { background: #111; }
-.gift-cards-grid { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+.best-selling {
+  background: #111;
+}
+
+.gift-cards-grid {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
 .gift-card-item,
-.gift-card-info h3 { color: #fff; }
-.gift-card-info p { color: var(--accent-pink); font-weight: 600; }
+.gift-card-info h3 {
+  color: #fff;
+}
+
+.gift-card-info p {
+  color: var(--accent-pink);
+  font-weight: 600;
+}
 
 /* Newsletter Section */
 .newsletter-section {
@@ -1061,20 +1185,66 @@
   background: linear-gradient(135deg, var(--accent-pink), var(--accent-pink-dark));
   text-align: center;
 }
-.newsletter-content h2 { font-size: 36px; font-weight: 700; margin-bottom: 16px; color: #fff; }
-.newsletter-content p { font-size: 18px; margin-bottom: 32px; color: rgba(255,255,255,0.9); }
-.newsletter-form { display: flex; max-width: 500px; margin: 0 auto; gap: 16px; }
-.newsletter-input { flex: 1; padding: 16px 20px; border: none; border-radius: 8px; font-size: 16px; background: #fff; color: #333; }
-.newsletter-input::placeholder { color: #666; }
-.newsletter-form .btn { background: #333; border-color: #333; }
-.newsletter-form .btn:hover { background: #222; border-color: #222; }
+
+.newsletter-content h2 {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: #fff;
+}
+
+.newsletter-content p {
+  font-size: 18px;
+  margin-bottom: 32px;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.newsletter-form {
+  display: flex;
+  max-width: 500px;
+  margin: 0 auto;
+  gap: 16px;
+}
+
+.newsletter-input {
+  flex: 1;
+  padding: 16px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  background: #fff;
+  color: #333;
+}
+
+.newsletter-input::placeholder {
+  color: #666;
+}
+
+.newsletter-form .btn {
+  background: #333;
+  border-color: #333;
+}
+
+.newsletter-form .btn:hover {
+  background: #222;
+  border-color: #222;
+}
 
 /* Enhanced Mobile Responsive Design */
 @media (max-width: 1200px) {
-  .hero-title { font-size: 42px; }
-  .featured-game-card { flex: 0 0 270px; height: 370px; }
-  .section-title { font-size: 30px; }
-  
+  .hero-title {
+    font-size: 42px;
+  }
+
+  .featured-game-card {
+    flex: 0 0 270px;
+    height: 370px;
+  }
+
+  .section-title {
+    font-size: 30px;
+  }
+
   .featured-section,
   .trending-section,
   .best-selling,
@@ -1086,40 +1256,85 @@
 }
 
 @media (max-width: 1024px) {
-  .hero { height: 500px; }
-  .hero-title { font-size: 38px; }
-  .hero-subtitle { font-size: 18px; }
-  .hero-cta { padding: 14px 28px; font-size: 16px; }
-  
-  .featured-game-card { flex: 0 0 260px; height: 360px; }
-  .featured-game-image { height: 200px; }
-  .featured-game-info { height: 160px; padding: 16px; }
-  .section-title { font-size: 28px; }
-  
+  .hero {
+    height: 500px;
+  }
+
+  .hero-title {
+    font-size: 38px;
+  }
+
+  .hero-subtitle {
+    font-size: 18px;
+  }
+
+  .hero-cta {
+    padding: 14px 28px;
+    font-size: 16px;
+  }
+
+  .featured-game-card {
+    flex: 0 0 260px;
+    height: 360px;
+  }
+
+  .featured-game-image {
+    height: 200px;
+  }
+
+  .featured-game-info {
+    height: 160px;
+    padding: 16px;
+  }
+
+  .section-title {
+    font-size: 28px;
+  }
+
   .products-grid,
   .gift-cards-grid,
   .top-sellers-grid {
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 20px;
   }
-  
+
   .top-seller-card.featured-seller {
     grid-column: span 1;
   }
-  
+
   .title-main {
     font-size: 24px;
   }
 }
 
 @media (max-width: 768px) {
-  .hero { height: 450px; }
-  .hero-title { font-size: 32px; line-height: 1.2; }
-  .hero-subtitle { font-size: 16px; }
-  .current-price { font-size: 20px; }
-  .hero-cta { padding: 12px 24px; font-size: 15px; }
-  .hero-nav { width: 42px; height: 42px; }
-  
+  .hero {
+    height: 450px;
+  }
+
+  .hero-title {
+    font-size: 32px;
+    line-height: 1.2;
+  }
+
+  .hero-subtitle {
+    font-size: 16px;
+  }
+
+  .current-price {
+    font-size: 20px;
+  }
+
+  .hero-cta {
+    padding: 12px 24px;
+    font-size: 15px;
+  }
+
+  .hero-nav {
+    width: 42px;
+    height: 42px;
+  }
+
   .featured-section,
   .trending-section,
   .best-selling,
@@ -1128,95 +1343,145 @@
   .software-section {
     padding: 50px 0;
   }
-  
-  .featured-game-card { flex: 0 0 240px; height: 340px; }
-  .featured-game-image { height: 180px; }
-  .featured-game-info { height: 160px; padding: 14px; }
-  .featured-game-title { font-size: 16px; }
-  .featured-current-price { font-size: 16px; }
-  
-  .section-header { 
-    flex-direction: column; 
-    align-items: flex-start; 
-    gap: 16px; 
+
+  .featured-game-card {
+    flex: 0 0 240px;
+    height: 340px;
+  }
+
+  .featured-game-image {
+    height: 180px;
+  }
+
+  .featured-game-info {
+    height: 160px;
+    padding: 14px;
+  }
+
+  .featured-game-title {
+    font-size: 16px;
+  }
+
+  .featured-current-price {
+    font-size: 16px;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
     margin-bottom: 30px;
   }
-  .section-title { font-size: 24px; }
-  .section-title-with-icon { gap: 10px; }
-  
-  .newsletter-form { 
-    flex-direction: column; 
+
+  .section-title {
+    font-size: 24px;
+  }
+
+  .section-title-with-icon {
+    gap: 10px;
+  }
+
+  .newsletter-form {
+    flex-direction: column;
     gap: 12px;
   }
-  .newsletter-content h2 { font-size: 28px; }
-  .newsletter-input { padding: 14px 18px; }
-  
+
+  .newsletter-content h2 {
+    font-size: 28px;
+  }
+
+  .newsletter-input {
+    padding: 14px 18px;
+  }
+
   .products-grid,
   .gift-cards-grid,
   .top-sellers-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
   }
-  
+
   .section-header-modern {
     flex-direction: column;
     align-items: flex-start;
     gap: 16px;
   }
-  
+
   .section-title-modern {
     gap: 16px;
   }
-  
+
   .title-icon-wrapper {
     width: 40px;
     height: 40px;
   }
-  
+
   .title-icon {
     width: 20px;
     height: 20px;
   }
-  
+
   .title-main {
     font-size: 22px;
   }
-  
+
   .top-seller-card.featured-seller {
     grid-column: span 2;
   }
-  
+
   .seller-image-container {
     height: 160px;
   }
 }
 
 @media (max-width: 480px) {
-  .hero { height: 400px; }
-  .hero-title { 
-    font-size: 26px; 
+  .hero {
+    height: 400px;
+  }
+
+  .hero-title {
+    font-size: 26px;
     line-height: 1.3;
     margin-bottom: 12px;
   }
-  .hero-subtitle { 
-    font-size: 14px; 
+
+  .hero-subtitle {
+    font-size: 14px;
     margin-bottom: 20px;
   }
-  .current-price { font-size: 18px; }
-  .hero-cta { 
-    padding: 10px 20px; 
+
+  .current-price {
+    font-size: 18px;
+  }
+
+  .hero-cta {
+    padding: 10px 20px;
     font-size: 14px;
     border-radius: 25px;
   }
-  .hero-nav { 
-    width: 36px; 
-    height: 36px; 
+
+  .hero-nav {
+    width: 36px;
+    height: 36px;
   }
-  .hero-nav.prev { left: 8px; }
-  .hero-nav.next { right: 8px; }
-  .hero-dots { bottom: 20px; }
-  .hero-dot { width: 10px; height: 10px; }
-  
+
+  .hero-nav.prev {
+    left: 8px;
+  }
+
+  .hero-nav.next {
+    right: 8px;
+  }
+
+  .hero-dots {
+    bottom: 20px;
+  }
+
+  .hero-dot {
+    width: 10px;
+    height: 10px;
+  }
+
   .featured-section,
   .trending-section,
   .best-selling,
@@ -1225,117 +1490,143 @@
   .software-section {
     padding: 40px 0;
   }
-  
-  .featured-game-card { 
-    flex: 0 0 200px; 
-    height: 300px; 
+
+  .featured-game-card {
+    flex: 0 0 200px;
+    height: 300px;
   }
-  .featured-game-image { height: 140px; }
-  .featured-game-info { 
-    height: 160px; 
-    padding: 12px; 
+
+  .featured-game-image {
+    height: 140px;
   }
-  .featured-game-title { 
-    font-size: 14px; 
+
+  .featured-game-info {
+    height: 160px;
+    padding: 12px;
+  }
+
+  .featured-game-title {
+    font-size: 14px;
     margin-bottom: 6px;
   }
+
   .featured-game-platform {
     font-size: 10px;
     padding: 2px 6px;
   }
-  .featured-current-price { font-size: 14px; }
-  .featured-original-price { font-size: 12px; }
+
+  .featured-current-price {
+    font-size: 14px;
+  }
+
+  .featured-original-price {
+    font-size: 12px;
+  }
+
   .featured-buy-btn {
     padding: 6px 0;
     font-size: 12px;
   }
-  
-  .section-title { 
-    font-size: 20px; 
+
+  .section-title {
+    font-size: 20px;
     line-height: 1.3;
   }
-  .section-icon { width: 20px; height: 20px; }
-  .view-all-link { font-size: 13px; }
-  
-  .newsletter-content h2 { 
-    font-size: 24px; 
+
+  .section-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .view-all-link {
+    font-size: 13px;
+  }
+
+  .newsletter-content h2 {
+    font-size: 24px;
     line-height: 1.3;
   }
-  .newsletter-content p { 
-    font-size: 16px; 
+
+  .newsletter-content p {
+    font-size: 16px;
     margin-bottom: 24px;
   }
-  .newsletter-input { 
-    padding: 12px 16px; 
-    font-size: 16px; /* Prevents zoom on iOS */
+
+  .newsletter-input {
+    padding: 12px 16px;
+    font-size: 16px;
+    /* Prevents zoom on iOS */
   }
+
   .newsletter-form .btn {
     padding: 12px 20px;
     font-size: 14px;
   }
-  
+
   .products-grid,
   .gift-cards-grid,
-  .top-sellers-grid { 
-    grid-template-columns: 1fr; 
+  .top-sellers-grid {
+    grid-template-columns: 1fr;
     gap: 12px;
   }
-  
-  .top-sellers-section { padding: 40px 0; }
-  
+
+  .top-sellers-section {
+    padding: 40px 0;
+  }
+
   .section-title-modern {
     gap: 12px;
   }
-  
+
   .title-icon-wrapper {
     width: 36px;
     height: 36px;
   }
-  
+
   .title-icon {
     width: 18px;
     height: 18px;
   }
-  
+
   .title-main {
     font-size: 20px;
   }
-  
+
   .title-subtitle {
     font-size: 12px;
   }
-  
+
   .view-all-btn {
     padding: 10px 16px;
     font-size: 12px;
   }
-  
+
   .top-sellers-grid {
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  
+
   .top-seller-card.featured-seller {
     grid-column: span 1;
   }
-  
+
   .seller-image-container {
     height: 140px;
   }
-  
+
   .seller-info {
     padding: 16px;
     gap: 10px;
   }
-  
+
   .seller-title {
     font-size: 14px;
   }
-  
+
   .seller-price .current-price {
     font-size: 16px;
   }
-  
+
   .seller-buy-btn {
     padding: 10px 12px;
     font-size: 13px;
@@ -1344,22 +1635,48 @@
 
 /* Extra small devices */
 @media (max-width: 360px) {
-  .hero { height: 350px; }
-  .hero-title { font-size: 22px; }
-  .hero-subtitle { font-size: 13px; }
-  .hero-cta { padding: 8px 16px; font-size: 13px; }
-  
-  .featured-game-card { 
-    flex: 0 0 180px; 
-    height: 280px; 
+  .hero {
+    height: 350px;
   }
-  .featured-game-image { height: 120px; }
-  .featured-game-info { padding: 10px; }
-  .featured-game-title { font-size: 13px; }
-  
-  .section-title { font-size: 18px; }
-  .newsletter-content h2 { font-size: 20px; }
-  
+
+  .hero-title {
+    font-size: 22px;
+  }
+
+  .hero-subtitle {
+    font-size: 13px;
+  }
+
+  .hero-cta {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+
+  .featured-game-card {
+    flex: 0 0 180px;
+    height: 280px;
+  }
+
+  .featured-game-image {
+    height: 120px;
+  }
+
+  .featured-game-info {
+    padding: 10px;
+  }
+
+  .featured-game-title {
+    font-size: 13px;
+  }
+
+  .section-title {
+    font-size: 18px;
+  }
+
+  .newsletter-content h2 {
+    font-size: 20px;
+  }
+
   .featured-section,
   .trending-section,
   .best-selling,
@@ -1372,10 +1689,18 @@
 
 /* Landscape orientation for mobile devices */
 @media (max-width: 768px) and (orientation: landscape) {
-  .hero { height: 350px; }
-  .hero-title { font-size: 28px; }
-  .hero-subtitle { font-size: 15px; }
-  
+  .hero {
+    height: 350px;
+  }
+
+  .hero-title {
+    font-size: 28px;
+  }
+
+  .hero-subtitle {
+    font-size: 15px;
+  }
+
   .featured-section,
   .trending-section,
   .best-selling,
@@ -1391,17 +1716,17 @@
   .featured-game-card:hover {
     transform: none;
   }
-  
+
   .featured-game-card:active {
     transform: scale(0.98);
   }
-  
+
   .hero-cta,
   .featured-buy-btn,
   .btn {
     min-height: 44px;
   }
-  
+
   .view-all-link {
     padding: 8px;
     margin: -8px;
@@ -1483,12 +1808,10 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.1) 0%,
-    rgba(0, 0, 0, 0.4) 50%,
-    rgba(0, 0, 0, 0.8) 100%
-  );
+  background: linear-gradient(to bottom,
+      rgba(0, 0, 0, 0.1) 0%,
+      rgba(0, 0, 0, 0.4) 50%,
+      rgba(0, 0, 0, 0.8) 100%);
   display: flex;
   align-items: flex-end;
   padding: 24px;
@@ -1496,12 +1819,10 @@
 }
 
 .software-item:hover .software-overlay {
-  background: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0.2) 0%,
-    rgba(0, 0, 0, 0.6) 50%,
-    rgba(0, 0, 0, 0.9) 100%
-  );
+  background: linear-gradient(to bottom,
+      rgba(0, 0, 0, 0.2) 0%,
+      rgba(0, 0, 0, 0.6) 50%,
+      rgba(0, 0, 0, 0.9) 100%);
 }
 
 .software-info {
@@ -1595,7 +1916,7 @@
     grid-template-columns: 1fr 1.5fr 1fr;
     height: 450px;
   }
-  
+
   .software-small {
     height: 215px;
   }
@@ -1608,50 +1929,50 @@
     gap: 16px;
     height: auto;
   }
-  
+
   .software-column {
     display: contents;
   }
-  
+
   .software-left,
   .software-right,
   .software-center {
     display: contents;
   }
-  
+
   .software-item {
     height: 200px;
     border-radius: 12px;
   }
-  
+
   .software-small,
   .software-large {
     height: 200px;
   }
-  
+
   .software-overlay {
     padding: 12px;
   }
-  
+
   .software-title {
     font-size: 14px;
     margin-bottom: 6px;
   }
-  
+
   .software-large .software-title {
     font-size: 14px;
   }
-  
+
   .software-description {
     font-size: 11px;
     margin-bottom: 8px;
     -webkit-line-clamp: 2;
   }
-  
+
   .software-price .current-price {
     font-size: 14px;
   }
-  
+
   .software-buy-btn {
     padding: 6px 12px;
     font-size: 11px;
@@ -1665,40 +1986,40 @@
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }
-  
+
   .software-item {
     height: 180px;
     border-radius: 10px;
   }
-  
+
   .software-small,
   .software-large {
     height: 180px;
   }
-  
+
   .software-overlay {
     padding: 10px;
   }
-  
+
   .software-title {
     font-size: 13px;
     margin-bottom: 4px;
   }
-  
+
   .software-large .software-title {
     font-size: 13px;
   }
-  
+
   .software-description {
     font-size: 10px;
     margin-bottom: 6px;
     -webkit-line-clamp: 1;
   }
-  
+
   .software-price .current-price {
     font-size: 13px;
   }
-  
+
   .software-buy-btn {
     padding: 5px 10px;
     font-size: 10px;
@@ -1719,66 +2040,68 @@
   .desktop-only {
     display: none;
   }
-  
+
   .mobile-only {
     display: block;
   }
 }
+
 /* Hero Swiper Slide Fixes */
- .hero-slider .swiper-slide {
- width: 100% !important;
-   height: 100% !important;
- }
+.hero-slider .swiper-slide {
+  width: 100% !important;
+  height: 100% !important;
+}
 
- .hero-slide {
-   width: 100% !important;
-   height: 100% !important;
-   background-size: cover !important;
-   background-position: center !important;
-   background-repeat: no-repeat !important;
-   display: flex !important;
-   align-items: center !important;
-   justify-content: center !important;
-   position: relative !important;
- }
-
- /* Mobile Hero Swiper Fixes */
- @media (max-width: 768px) {
-   .hero-slider .swiper-slide {
-         width: 100% !important;
-    height: 100% !important;
-     display: flex !important;
-   }
-
-   .hero-slide {
-     width: 100% !important;
-     height: 100% !important;
-     background-size: cover !important;
-     background-position: center center !important;
-          background-repeat: no-repeat !important;
+.hero-slide {
+  width: 100% !important;
+  height: 100% !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
   display: flex !important;
-     align-items: center !important;
-     justify-content: center !important;
-     position: relative !important;
-   }
- }
+  align-items: center !important;
+  justify-content: center !important;
+  position: relative !important;
+}
 
- @media (max-width: 480px) {
-   .hero-slider .swiper-slide {
-     width: 100% !important;
-     height: 100% !important;
-     min-width: 100% !important;
-   }
+/* Mobile Hero Swiper Fixes */
+@media (max-width: 768px) {
+  .hero-slider .swiper-slide {
+    width: 100% !important;
+    height: 100% !important;
+    display: flex !important;
   }
-   
+
   .hero-slide {
-   width: 100% !important;
-     height: 100% !important;
-     min-width: 100% !important;
-     background-size: cover !important;
-     background-position: center center !important;
-     background-repeat: no-repeat !important;
-   }
+    width: 100% !important;
+    height: 100% !important;
+    background-size: cover !important;
+    background-position: center center !important;
+    background-repeat: no-repeat !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-slider .swiper-slide {
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 100% !important;
+  }
+}
+
+.hero-slide {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 100% !important;
+  background-size: cover !important;
+  background-position: center center !important;
+  background-repeat: no-repeat !important;
+}
+
 /* Hero Image Tag Solution */
 .hero-slide {
   position: relative !important;
@@ -1808,7 +2131,7 @@
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  background: linear-gradient(135deg, rgba(0,0,0,0.6), rgba(255,86,97,0.15)) !important;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.6), rgba(255, 86, 97, 0.15)) !important;
 }
 
 /* Mobile Hero Image Fixes */
@@ -1819,9 +2142,9 @@
     object-fit: cover !important;
     object-position: center !important;
   }
-  
+
   .hero-overlay {
-    background: linear-gradient(135deg, rgba(0,0,0,0.7), rgba(255,86,97,0.2)) !important;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(255, 86, 97, 0.2)) !important;
   }
 }
 
@@ -1832,9 +2155,9 @@
     object-fit: cover !important;
     object-position: center center !important;
   }
-  
+
   .hero-overlay {
-    background: linear-gradient(135deg, rgba(0,0,0,0.75), rgba(255,86,97,0.25)) !important;
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.75), rgba(255, 86, 97, 0.25)) !important;
   }
 }
 
@@ -1844,17 +2167,62 @@
   justify-content: space-between;
   gap: 12px;
 }
-.header-controls { display: flex; align-items: center; gap: 12px; }
-.scroll-controls { display: flex; gap: 8px; }
-.scroll-btn { background: #1a1a1a; border: 1px solid #333; color: #fff; border-radius: 6px; padding: 6px; cursor: pointer; }
-.scroll-btn:hover { border-color: #ff4757; color: #ff4757; }
 
-.product-row { display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth; scroll-snap-type: x mandatory; padding: 0 2px 16px; }
-.product-row::-webkit-scrollbar { display: none; }
-.product-row { -ms-overflow-style: none; scrollbar-width: none; }
-.product-row-item { flex: 0 0 auto; width: 260px; scroll-snap-align: start; }
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
-@media (max-width: 768px) { 
-  .product-row-item { width: 220px; }
-  .scroll-controls { display:none; }
+.scroll-controls {
+  display: flex;
+  gap: 8px;
+}
+
+.scroll-btn {
+  background: #1a1a1a;
+  border: 1px solid #333;
+  color: #fff;
+  border-radius: 6px;
+  padding: 6px;
+  cursor: pointer;
+}
+
+.scroll-btn:hover {
+  border-color: #ff4757;
+  color: #ff4757;
+}
+
+.product-row {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  scroll-snap-type: x mandatory;
+  padding: 0 2px 16px;
+}
+
+.product-row::-webkit-scrollbar {
+  display: none;
+}
+
+.product-row {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.product-row-item {
+  flex: 0 0 auto;
+  width: 260px;
+  scroll-snap-align: start;
+}
+
+@media (max-width: 768px) {
+  .product-row-item {
+    width: 220px;
+  }
+
+  .scroll-controls {
+    display: none;
+  }
 }

@@ -1,0 +1,39 @@
+/* MoneyRow - Dark Theme */
+
+.money-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+}
+
+.money-row.is-total {
+  border-top: 2px solid #374151; /* gray-700 */
+  padding-top: 12px;
+  margin-top: 8px;
+}
+
+.money-row-label {
+  color: #94a3b8; /* slate-400 */
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.money-row-label.is-total {
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.money-row-amount {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.money-row-amount.is-total {
+  font-size: 18px;
+}
+
+.money-row-amount.is-discount {
+  color: #ef4444; /* red-500 */
+}

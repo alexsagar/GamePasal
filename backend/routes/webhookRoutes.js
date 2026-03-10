@@ -1,11 +1,11 @@
 const express = require('express');
-const { handleGatewayWebhook, handleWalletTopupWebhook } = require('../controllers/webhookController');
+const { handleGatewayWebhook } = require('../controllers/webhookController');
 
 const router = express.Router();
 
-// Webhooks are usually unauthenticated but must be verified by signature inside controller
+// Legacy webhook routes - return 410 Gone
 router.post('/:gateway', handleGatewayWebhook);
-router.post('/:gateway/wallet-topup', handleWalletTopupWebhook);
+router.post('/:gateway/wallet-topup', handleGatewayWebhook);
 
 module.exports = router;
 

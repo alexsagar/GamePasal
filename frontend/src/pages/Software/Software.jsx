@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Monitor, Filter, Grid, List, Search } from 'lucide-react';
+import { Monitor, Search } from 'lucide-react';
 import ProductCard from '../../components/ProductCard/ProductCard';
 import api from '../../services/api';
 import './Software.css';
@@ -9,31 +9,47 @@ const Software = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [software, setSoftware] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState('grid');
-  const [sortBy, setSortBy] = useState('newest');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [priceRange, setPriceRange] = useState({ min: '', max: '' });
-  const [showFilters, setShowFilters] = useState(false);
 
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalProducts, setTotalProducts] = useState(0);
   const productsPerPage = 12;
 
+  const currentPage = Math.max(parseInt(searchParams.get('page') || '1', 10), 1);
+  const searchTerm = searchParams.get('search') || '';
+  const priceRange = {
+    min: searchParams.get('minPrice') || '',
+    max: searchParams.get('maxPrice') || ''
+  };
+
+  const updateParams = (updates = {}) => {
+    const next = new URLSearchParams(searchParams);
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === '') {
+        next.delete(key);
+      } else {
+        next.set(key, value);
+      }
+    });
+
+    if (!('page' in updates)) {
+      next.set('page', '1');
+    }
+
+    setSearchParams(next, { replace: true });
+  };
+
   useEffect(() => {
     fetchSoftware();
-  }, [currentPage, sortBy, searchTerm, priceRange]);
+  }, [currentPage, searchTerm, priceRange.min, priceRange.max]);
 
   const fetchSoftware = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
         category: 'Software',
-        page: currentPage,
-        limit: productsPerPage,
-        sort: getSortField(sortBy),
-        order: getSortOrder(sortBy)
+        page: String(currentPage),
+        limit: productsPerPage
       });
 
       if (searchTerm) params.append('search', searchTerm);
@@ -52,46 +68,25 @@ const Software = () => {
     }
   };
 
-  const getSortField = (sortBy) => {
-    switch (sortBy) {
-      case 'price-low': return 'price';
-      case 'price-high': return 'price';
-      case 'name': return 'name';
-      case 'newest': return 'createdAt';
-      default: return 'createdAt';
-    }
-  };
-
-  const getSortOrder = (sortBy) => {
-    switch (sortBy) {
-      case 'price-low': return 'asc';
-      case 'price-high': return 'desc';
-      case 'name': return 'asc';
-      case 'newest': return 'desc';
-      default: return 'desc';
-    }
-  };
-
   const handleSearch = (e) => {
     e.preventDefault();
-    setCurrentPage(1);
-    fetchSoftware();
+    updateParams({ search: searchTerm, page: '1' });
   };
 
   const handlePriceFilter = () => {
-    setCurrentPage(1);
-    fetchSoftware();
+    updateParams({
+      minPrice: priceRange.min,
+      maxPrice: priceRange.max,
+      page: '1'
+    });
   };
 
   const clearFilters = () => {
-    setSearchTerm('');
-    setPriceRange({ min: '', max: '' });
-    setSortBy('newest');
-    setCurrentPage(1);
+    setSearchParams(new URLSearchParams({ page: '1' }), { replace: true });
   };
 
   const handlePageChange = (page) => {
-    setCurrentPage(page);
+    updateParams({ page: String(page) });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -122,14 +117,6 @@ const Software = () => {
         {/* Filters and Controls */}
         <div className="software-controls">
           <div className="software-controls-left">
-            <button 
-              className={`filter-toggle ${showFilters ? 'active' : ''}`}
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Filter size={18} />
-              Filters
-            </button>
-            
             <form onSubmit={handleSearch} className="search-form">
               <div className="search-input-wrapper">
                 <Search size={18} className="search-icon" />
@@ -137,77 +124,47 @@ const Software = () => {
                   type="text"
                   placeholder="Search software..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => updateParams({ search: e.target.value })}
                   className="search-input"
                 />
               </div>
               <button type="submit" className="search-btn">Search</button>
             </form>
           </div>
-
-          <div className="software-controls-right">
-            <select 
-              value={sortBy} 
-              onChange={(e) => setSortBy(e.target.value)}
-              className="sort-select"
-            >
-              <option value="newest">Newest First</option>
-              <option value="name">Name A-Z</option>
-              <option value="price-low">Price: Low to High</option>
-              <option value="price-high">Price: High to Low</option>
-            </select>
-
-            <div className="view-mode-toggle">
-              <button 
-                className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
-                onClick={() => setViewMode('grid')}
-              >
-                <Grid size={18} />
-              </button>
-              <button 
-                className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
-                onClick={() => setViewMode('list')}
-              >
-                <List size={18} />
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Advanced Filters */}
-        {showFilters && (
-          <div className="advanced-filters">
-            <div className="filter-section">
-              <h4>Price Range</h4>
-              <div className="price-range">
-                <input
-                  type="number"
-                  placeholder="Min"
-                  value={priceRange.min}
-                  onChange={(e) => setPriceRange(prev => ({ ...prev, min: e.target.value }))}
-                  className="price-input"
-                />
-                <span>to</span>
-                <input
-                  type="number"
-                  placeholder="Max"
-                  value={priceRange.max}
-                  onChange={(e) => setPriceRange(prev => ({ ...prev, max: e.target.value }))}
-                  className="price-input"
-                />
-                <button onClick={handlePriceFilter} className="apply-filter-btn">
-                  Apply
-                </button>
-              </div>
-            </div>
-            
-            <div className="filter-actions">
-              <button onClick={clearFilters} className="clear-filters-btn">
-                Clear All Filters
+        <div className="advanced-filters">
+          <div className="filter-section">
+            <h4>Price Range</h4>
+            <div className="price-range">
+              <input
+                type="number"
+                placeholder="Min"
+                value={priceRange.min}
+                onChange={(e) => updateParams({ minPrice: e.target.value })}
+                className="price-input"
+              />
+              <span>to</span>
+              <input
+                type="number"
+                placeholder="Max"
+                value={priceRange.max}
+                onChange={(e) => updateParams({ maxPrice: e.target.value })}
+                className="price-input"
+              />
+              <button onClick={handlePriceFilter} className="apply-filter-btn">
+                Apply
               </button>
             </div>
           </div>
-        )}
+          
+          <div className="filter-actions">
+            <button onClick={clearFilters} className="clear-filters-btn">
+              Clear All Filters
+            </button>
+          </div>
+        </div>
 
         {/* Software Grid/List */}
         <div className="software-content">
@@ -218,13 +175,13 @@ const Software = () => {
             </div>
           ) : software.length > 0 ? (
             <>
-              <div className={`software-grid ${viewMode}`}>
+              <div className="software-grid grid">
                 {software.map((product) => (
                   <ProductCard 
                     key={product._id} 
                     product={product} 
-                    variant={viewMode === 'list' ? 'list' : 'simple'}
-                    context={viewMode === 'list' ? undefined : 'page'}
+                    variant="simple"
+                    context="page"
                   />
                 ))}
               </div>

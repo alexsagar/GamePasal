@@ -15,7 +15,8 @@ const {
   getPreOrderProducts,
   getGiftCards,
   getSoftware,
-  getAdminProducts
+  getAdminProducts,
+  getProductRecommendations
 } = require('../controllers/productController');
 const auth = require('../middleware/auth');
 const isAdmin = require('../middleware/isAdmin');
@@ -204,6 +205,7 @@ router.get('/preorder', getPreOrderProducts);
 router.get('/gift-cards', getGiftCards);
 router.get('/software', getSoftware);
 router.get('/', getProducts);
+router.get('/:id/recommendations', getProductRecommendations);
 router.get('/:id', getProduct);
 
 

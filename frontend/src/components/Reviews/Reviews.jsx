@@ -62,7 +62,6 @@ const Reviews = ({
 }) => {
   const [reviews, setReviews] = useState(reviewsProp && reviewsProp.length ? reviewsProp : []);
   const [loading, setLoading] = useState(fetchFromApi && !(reviewsProp && reviewsProp.length));
-  const [error, setError] = useState(null);
   const reducedMotion = usePrefersReducedMotion();
   const swiperRef = useRef(null);
 
@@ -72,14 +71,12 @@ const Reviews = ({
     async function fetchReviews() {
       if (!fetchFromApi || (reviewsProp && reviewsProp.length)) return;
       setLoading(true);
-      setError(null);
       try {
         const res = await api.get('/reviews', { params: { limit } });
         const data = Array.isArray(res?.data?.data) ? res.data.data : (Array.isArray(res?.data) ? res.data : []);
         if (!cancelled) setReviews((data && data.length) ? data : DEFAULT_REVIEWS);
       } catch (err) {
         if (!cancelled) {
-          setError('Failed to load reviews');
           setReviews(DEFAULT_REVIEWS);
         }
       } finally {
@@ -139,7 +136,7 @@ const Reviews = ({
           spaceBetween={18}
           // Force 2 cards per view on mobile by default
           slidesPerView={2}
-          pagination={{ clickable: true, renderBullet: (index, className) => `<button class=\"${className}\" aria-label=\"Go to testimonial ${index + 1}\"></button>` }}
+          pagination={{ clickable: true, renderBullet: (index, className) => `<button class="${className}" aria-label="Go to testimonial ${index + 1}"></button>` }}
           a11y={{ enabled: true }}
           onSwiper={(swiper) => { swiperRef.current = swiper; }}
           breakpoints={{

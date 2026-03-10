@@ -1,47 +1,72 @@
 # Reviews Component
 
-Path: `frontend/src/components/Reviews/Reviews.jsx`
+`Reviews` renders a testimonial carousel with an API-backed review source and a static fallback list.
+
+## File Path
+
+- `frontend/src/components/Reviews/Reviews.jsx`
+
+## Features
+
+- Swiper-based responsive carousel
+- optional API fetch from `/api/reviews`
+- local fallback review list if the API is unavailable
+- autoplay with reduced-motion awareness
+- pause and resume behavior based on tab visibility
+- Trustpilot-style call-to-action links
 
 ## Props
+
 ```ts
 type Review = {
   id: string;
   quote: string;
   name: string;
-  rating: number; // 1–5
+  rating: number;
   avatarUrl?: string;
 };
 
-interface ReviewsProps {
-  reviews?: Review[];          // optional static list
-  trustpilotUrl?: string;      // external URL for the pill + label
-  fetchFromApi?: boolean;      // default true; when true, GET /api/reviews?limit=<limit>
-  limit?: number;              // default 24 when fetching
-  className?: string;          // optional extra class on the section
-}
+type ReviewsProps = {
+  reviews?: Review[];
+  trustpilotUrl?: string;
+  fetchFromApi?: boolean;
+  limit?: number;
+  className?: string;
+};
 ```
+
+## Default Behavior
+
+- `fetchFromApi` defaults to `true`
+- `limit` defaults to `24`
+- `trustpilotUrl` defaults to `https://www.trustpilot.com/`
 
 ## Usage
+
 ```jsx
-import Reviews from '@/components/Reviews/Reviews';
+import Reviews from './Reviews';
 
-// Static list
-const list = [
-  { id: '1', quote: 'Quick and reliable subscription service!', name: 'Sujan', rating: 5 },
-  { id: '2', quote: 'Great prices and instant delivery.', name: 'Aarav', rating: 5 },
-];
-
-<Reviews reviews={list} trustpilotUrl="https://www.trustpilot.com/review/yourdomain.com" fetchFromApi={false} />
-
-// Or fetch from API with fallback
-<Reviews trustpilotUrl="https://www.trustpilot.com/review/yourdomain.com" fetchFromApi={true} limit={30} />
+<Reviews
+  trustpilotUrl="https://www.trustpilot.com/review/example.com"
+  fetchFromApi={true}
+  limit={24}
+/>
 ```
 
-- Autoplay: 3.5s, loops, pauses on hover and when tab hidden; disabled if user prefers reduced motion.
-- Responsive slides per view: 1 (<640px), 2 (≥640px), 3 (≥1024px), 4 (≥1440px).
-- Accessible: ARIA labels on container, slides, and pagination buttons.
-- Loading: shows 3 skeleton cards; on error, falls back to a small static list.
+Or pass a static list:
 
-## Trustpilot URL
-- Set via `trustpilotUrl` prop wherever you render the component (e.g., `Home.jsx`).
-- Example: `https://www.trustpilot.com/review/yourdomain.com`. 
+```jsx
+<Reviews
+  reviews={[
+    { id: '1', quote: 'Fast delivery and smooth checkout.', name: 'Aarav', rating: 5 },
+    { id: '2', quote: 'Reliable codes and clear support.', name: 'Sujan', rating: 5 }
+  ]}
+  fetchFromApi={false}
+/>
+```
+
+## Behavior Notes
+
+- On loading, the component shows skeleton cards.
+- On API failure, it falls back to a small local review set.
+- On very small screens, the carousel still renders two cards by default in the current implementation.

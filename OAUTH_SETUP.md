@@ -1,56 +1,72 @@
-# OAuth Setup Instructions
+# OAuth Setup
 
-## Google OAuth Setup
+This document explains the social login configuration used by GamePasal.
 
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Enable the Google+ API
-4. Go to "Credentials" and create OAuth 2.0 Client ID
-5. Set authorized JavaScript origins:
-   - `http://localhost:3000` (for development)
-   - Your production domain
-6. Copy the Client ID and add it to your environment variables
+## Current Implementation
 
-## Facebook OAuth Setup
+The backend exposes token-based social login endpoints:
 
-1. Go to [Facebook Developers](https://developers.facebook.com/)
-2. Create a new app
-3. Add Facebook Login product
-4. Configure OAuth redirect URIs:
-   - `http://localhost:3000` (for development)
-   - Your production domain
-5. Copy the App ID and add it to your environment variables
+- `POST /api/auth/google`
+- `POST /api/auth/facebook`
 
-## Environment Variables
+The frontend provides the Google OAuth client through `GoogleOAuthProvider` and sends social login data to the backend API.
 
-Create a `.env` file in the frontend directory with:
+## Frontend Configuration
 
-```
-VITE_GOOGLE_CLIENT_ID=your-google-client-id.apps.googleusercontent.com
-VITE_FACEBOOK_APP_ID=your-facebook-app-id
-VITE_API_URL=http://localhost:5000
+Create `frontend/.env`:
+
+```env
+VITE_API_URL=http://localhost:5000/api
+VITE_GOOGLE_CLIENT_ID=your_google_client_id
 ```
 
-## Features Implemented
+## Backend Configuration
 
-- ✅ Google OAuth login/signup
-- ✅ Facebook OAuth login/signup
-- ✅ Automatic account linking for existing users
-- ✅ New user creation with social accounts
-- ✅ JWT token generation and management
-- ✅ Social account verification
+Create or update `backend/.env`:
 
-## Usage
+```env
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
 
-Users can now:
-1. Click "Continue with Google" or "Continue with Facebook" on signup/login pages
-2. If they have an existing account with the same email, the social account will be linked
-3. If they don't have an account, a new one will be created automatically
-4. They'll be logged in immediately after successful OAuth authentication
+FACEBOOK_APP_ID=your_facebook_app_id
+FACEBOOK_APP_SECRET=your_facebook_app_secret
 
-## Security Notes
+CLIENT_URL=http://localhost:5173
+```
 
-- Social accounts are automatically verified upon successful OAuth
-- Users created via OAuth are marked as verified
-- Random passwords are generated for OAuth users
-- All OAuth tokens are validated on the backend
+## Google Setup
+
+1. Open Google Cloud Console.
+2. Create or select a project.
+3. Configure the OAuth consent screen.
+4. Create OAuth credentials.
+5. Add the appropriate JavaScript origins for your frontend.
+6. Add the client ID to both frontend and backend environment variables as required by your implementation.
+
+For local development, the frontend origin is typically:
+
+```text
+http://localhost:5173
+```
+
+## Facebook Setup
+
+1. Open Facebook for Developers.
+2. Create an application.
+3. Enable Facebook Login.
+4. Configure the allowed frontend origin and any backend callback requirements used by your environment.
+5. Add the application credentials to `backend/.env`.
+
+## Expected Behavior
+
+- Existing users can sign in with a supported social provider.
+- If the backend logic permits it, accounts can be linked by email.
+- Social-authenticated users receive the same application token flow used by the rest of the system.
+
+## Operational Notes
+
+- Keep client IDs and secrets out of version control.
+- Use separate credentials for development and production.
+- Recheck allowed origins when deploying to a new domain.
+- If social login fails, verify frontend origin, backend environment variables, and provider-side application status first.
+

@@ -8,7 +8,9 @@ const {
   updateOrderStatus,
   cancelOrder,
   deleteOrder,
-  refundOrder
+  refundOrder,
+  deliverOrder,
+  getOrderDeliveryDetails
 } = require('../controllers/orderController');
 const auth = require('../middleware/auth');
 const isAdmin = require('../middleware/isAdmin');
@@ -48,6 +50,7 @@ router.use(auth);
 router.post('/', orderValidation, createOrder);
 router.get('/user', getUserOrders);
 router.get('/:id', getOrder);
+router.get('/:id/delivery', getOrderDeliveryDetails);
 router.delete('/:id', cancelOrder);
 router.delete('/:id/delete', deleteOrder);
 
@@ -55,5 +58,6 @@ router.delete('/:id/delete', deleteOrder);
 router.get('/', isAdmin, getAllOrders);
 router.put('/:id', isAdmin, updateOrderStatus);
 router.post('/:id/refund', isAdmin, refundOrder);
+router.post('/:id/deliver', isAdmin, deliverOrder);
 
 module.exports = router;

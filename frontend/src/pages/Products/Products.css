@@ -75,6 +75,31 @@
   color: #ffffff;
 }
 
+.sort-select {
+  background: #1a1a1a;
+  border: 2px solid #333;
+  color: #cccccc;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.3s ease;
+  height: 44px;
+  /* Matches view-controls height roughly */
+}
+
+.sort-select:hover,
+.sort-select:focus {
+  border-color: #ff4757;
+  color: #ffffff;
+}
+
+.sort-select option {
+  background: #1a1a1a;
+  color: #ffffff;
+}
+
 .products-content {
   display: grid;
   grid-template-columns: 280px 1fr;
@@ -170,18 +195,37 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-@media (min-width: 768px) { /* md */
-  .products-grid.grid { grid-template-columns: repeat(3, 1fr); }
+@media (min-width: 768px) {
+
+  /* md */
+  .products-grid.grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
-@media (min-width: 1024px) { /* lg */
-  .products-grid.grid { grid-template-columns: repeat(4, 1fr); }
+
+@media (min-width: 1024px) {
+
+  /* lg */
+  .products-grid.grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
+
 /* Keep 4 columns on larger screens as well */
-@media (min-width: 1280px) { /* xl */
-  .products-grid.grid { grid-template-columns: repeat(4, 1fr); }
+@media (min-width: 1280px) {
+
+  /* xl */
+  .products-grid.grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
-@media (min-width: 1536px) { /* 2xl */
-  .products-grid.grid { grid-template-columns: repeat(4, 1fr); }
+
+@media (min-width: 1536px) {
+
+  /* 2xl */
+  .products-grid.grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
 .products-grid.list {
@@ -232,23 +276,36 @@
   flex-direction: column;
   gap: 40px;
 }
+
 .giftcard-row-section {
   width: 100%;
 }
+
 .giftcard-row-header {
   font-size: 1.3rem;
   font-weight: 700;
   margin-bottom: 16px;
   color: #ff4757;
 }
+
 .giftcard-row-list {
   display: grid;
   gap: 16px;
   /* Default 2 per row on small, scale to 4 on desktop */
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
-@media (min-width: 768px){ .giftcard-row-list{ grid-template-columns: repeat(3, 1fr);} }
-@media (min-width: 1024px){ .giftcard-row-list{ grid-template-columns: repeat(4, 1fr);} }
+
+@media (min-width: 768px) {
+  .giftcard-row-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .giftcard-row-list {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
 
 /* Gift Card Carousel Styles */
 .giftcard-carousel-container {
@@ -306,12 +363,12 @@
   .products-content {
     grid-template-columns: 1fr;
   }
-  
+
   .filters-sidebar {
     position: static;
     display: none;
   }
-  
+
   .filters-sidebar.show {
     display: block;
     margin-bottom: 24px;
@@ -323,24 +380,24 @@
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .products-controls {
     justify-content: space-between;
   }
-  
+
   .products-title-section h1 {
     font-size: 24px;
   }
-  
+
   .products-grid.grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
   }
-  
+
   .products-grid.list .product-card {
     grid-template-columns: 1fr;
   }
-  
+
   .filter-toggle {
     flex: 1;
     justify-content: center;
@@ -350,17 +407,17 @@
   .giftcard-swiper .swiper-button-prev {
     left: 10px;
   }
-  
+
   .giftcard-swiper .swiper-button-next {
     right: 10px;
   }
-  
+
   .giftcard-swiper .swiper-button-prev,
   .giftcard-swiper .swiper-button-next {
     width: 35px;
     height: 35px;
   }
-  
+
   .giftcard-swiper .swiper-button-prev::after,
   .giftcard-swiper .swiper-button-next::after {
     font-size: 14px;
@@ -371,15 +428,15 @@
   .products-page {
     padding: 20px 0;
   }
-  
+
   .products-grid.grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  
+
   .view-controls {
     display: none;
   }
-  
+
   .filters-sidebar {
     padding: 16px;
   }
@@ -396,9 +453,11 @@
   0% {
     background-color: #333;
   }
+
   50% {
     background-color: #444;
   }
+
   100% {
     background-color: #333;
   }
@@ -424,4 +483,3 @@
   width: 50%;
   height: 20px;
 }
-

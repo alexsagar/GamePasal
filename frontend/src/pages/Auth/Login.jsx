@@ -66,16 +66,16 @@ const Login = () => {
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       setLoading(true);
-      
+
       // Decode the JWT token to get user info
       const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
         headers: {
           Authorization: `Bearer ${credentialResponse.credential}`,
         },
       });
-      
+
       const googleUser = await response.json();
-      
+
       const result = await googleLogin({
         idToken: credentialResponse.credential,
         email: googleUser.email,
@@ -104,7 +104,7 @@ const Login = () => {
   const handleFacebookLogin = async () => {
     try {
       setLoading(true);
-      
+
       // Wait for Facebook SDK to load
       const waitForFB = () => {
         return new Promise((resolve) => {
@@ -112,7 +112,7 @@ const Login = () => {
             resolve();
             return;
           }
-          
+
           const checkFB = () => {
             if (window.FB) {
               resolve();
@@ -302,13 +302,16 @@ const Login = () => {
             shape="rectangular"
             logo_alignment="left"
           />
-          <button 
+          <button
+            type="button"
             className="social-btn facebook"
             onClick={handleFacebookLogin}
             disabled={loading}
           >
-            <Facebook size={20} />
-            Facebook
+            <div className="social-icon">
+              <Facebook size={20} />
+            </div>
+            Continue with Facebook
           </button>
         </div>
       </div>

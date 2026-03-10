@@ -19,11 +19,13 @@ const ProductCard = ({ product, featured = false, variant = "default", context =
   const { addToCart, updateQuantity, removeFromCart, isInCart, getCartItem } = useCart();
   const navigate = useNavigate();
   const [showAddedToast, setShowAddedToast] = useState(false);
+  const parsedStock = Number(product?.stock);
+  const stockValue = Number.isFinite(parsedStock) ? parsedStock : 0;
 
   const inCart = isInCart(product._id);
   const cartItem = getCartItem(product._id);
   const currentQty = cartItem?.quantity || 0;
-  const maxStock = typeof product.stock === 'number' ? product.stock : Infinity;
+  const maxStock = stockValue;
   const isOutOfStock = maxStock === 0;
 
   const handleNavigate = () => {
@@ -76,7 +78,7 @@ const ProductCard = ({ product, featured = false, variant = "default", context =
             className={simple ? `add-btn-compact ${context}` : 'add-btn'}
             onClick={handleAdd}
             aria-label="Add to cart"
-            onKeyDown={(e)=>{ if(e.key==='Enter' || e.key===' '){ handleAdd(e);} }}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { handleAdd(e); } }}
           >
             Add to Cart
           </button>
@@ -115,17 +117,17 @@ const ProductCard = ({ product, featured = false, variant = "default", context =
 
   // --- Simple (homepage, grids) ---
   if (variant === 'simple') {
-    const discountPercentage = product.salePrice 
+    const discountPercentage = product.salePrice
       ? Math.round(((product.price - product.salePrice) / product.price) * 100)
       : 0;
 
     return (
       <div className={`product-card-compact ${context}`} onClick={handleNavigate} style={{ cursor: 'pointer' }}>
         <div className="product-image-wrapper">
-          <img 
-            src={getImageSrc(product.image)} 
-            alt={product.title} 
-            loading="lazy" 
+          <img
+            src={getImageSrc(product.image)}
+            alt={product.title}
+            loading="lazy"
             className="product-image-compact"
           />
           {product.badge && (
@@ -139,22 +141,25 @@ const ProductCard = ({ product, featured = false, variant = "default", context =
             </span>
           )}
         </div>
-        
+
         <div className="product-content-compact">
           <div className="product-meta-compact">
             {product.platform && (
               <span className="platform-tag">{product.platform}</span>
             )}
-            {product.rating && (
+            {product.category === 'GiftCard' && (
+              <span className="stock-tag">Stock: {stockValue}</span>
+            )}
+            {product.rating > 0 && (
               <div className="rating-compact">
                 <Star size={10} fill="#ffd700" color="#ffd700" />
                 <span>{product.rating}</span>
               </div>
             )}
           </div>
-          
+
           <h3 className="product-title-compact">{product.title}</h3>
-          
+
           <div className="product-price-compact">
             <span className="current-price-compact">
               NRS {product.salePrice ? product.salePrice : product.price}
@@ -163,7 +168,7 @@ const ProductCard = ({ product, featured = false, variant = "default", context =
               <span className="original-price-compact">NRS {product.price}</span>
             )}
           </div>
-          
+
           <ActionArea simple />
         </div>
       </div>
@@ -185,7 +190,7 @@ const ProductCard = ({ product, featured = false, variant = "default", context =
             {product.description.length > 70 ? product.description.slice(0, 70) + '...' : product.description}
           </p>
         )}
-        {product.rating && (
+        {product.rating > 0 && (
           <div className="product-rating">
             <Star size={14} fill="#ffd700" color="#ffd700" />
             <span>{product.rating}</span>

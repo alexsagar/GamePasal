@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import { userAPI } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -55,23 +56,34 @@ const authReducer = (state, action) => {
   }
 };
 
+const readStoredUser = () => {
+  const storedUser = localStorage.getItem('user');
+  if (!storedUser) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(storedUser);
+  } catch (error) {
+    localStorage.removeItem('user');
+    return null;
+  }
+};
+
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
-  const [walletBalancePaisa, setWalletBalancePaisa] = React.useState(0);
 
   useEffect(() => {
     // Check for existing tokens on app load
     const accessToken = localStorage.getItem('accessToken');
     const refreshToken = localStorage.getItem('refreshToken');
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = readStoredUser();
 
     if (accessToken && refreshToken && user) {
       dispatch({
         type: 'LOGIN_SUCCESS',
         payload: { user, accessToken, refreshToken }
       });
-      const wb = parseInt(localStorage.getItem('walletBalancePaisa') || '0', 10);
-      if (!Number.isNaN(wb)) setWalletBalancePaisa(wb);
     } else {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
@@ -95,7 +107,7 @@ export const AuthProvider = ({ children }) => {
 
       if (data.success) {
         const { accessToken, refreshToken, user } = data.data;
-        
+
         // Store tokens and user data
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
@@ -170,7 +182,7 @@ export const AuthProvider = ({ children }) => {
 
       if (data.success) {
         const { accessToken, refreshToken, user } = data.data;
-        
+
         // Store tokens and user data
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
@@ -210,7 +222,7 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
-      
+
       dispatch({ type: 'LOGOUT' });
     }
   };
@@ -229,10 +241,10 @@ export const AuthProvider = ({ children }) => {
 
       if (data.success) {
         const { accessToken } = data.data;
-        
+
         // Update access token
         localStorage.setItem('accessToken', accessToken);
-        
+
         dispatch({
           type: 'UPDATE_TOKENS',
           payload: { accessToken, refreshToken: state.refreshToken }
@@ -251,91 +263,28 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const refreshWallet = async () => {
-    try {
-      if (!state.accessToken) return;
-      const res = await fetch(`${API_BASE_URL}/wallet/me`, {
-        headers: { Authorization: `Bearer ${state.accessToken}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        setWalletBalancePaisa(data.data?.balancePaisa || 0);
-        localStorage.setItem('walletBalancePaisa', String(data.data?.balancePaisa || 0));
-      }
-    } catch {}
-  };
-
-  useEffect(() => {
-    if (!state.accessToken) return;
-    
-    let es = null;
-    let reconnectTimer = null;
-    
-    const connectSSE = () => {
-      try {
-        es = new EventSource(`${API_BASE_URL}/wallet/stream?token=${state.accessToken}`);
-        
-        es.addEventListener('connected', (e) => {
-          console.log('SSE connected:', e.data);
-        });
-        
-        es.addEventListener('wallet:update', (e) => {
-          try {
-            const { balancePaisa } = JSON.parse(e.data || '{}');
-            if (typeof balancePaisa === 'number') {
-              setWalletBalancePaisa(balancePaisa);
-              localStorage.setItem('walletBalancePaisa', String(balancePaisa));
-            }
-          } catch (err) {
-            console.error('SSE data parse error:', err);
-          }
-        });
-        
-        es.addEventListener('ping', (e) => {
-          // Keep connection alive
-        });
-        
-        es.onerror = (e) => {
-          console.log('SSE connection error, will retry...');
-          if (es) {
-            es.close();
-            es = null;
-          }
-          // Retry after 5 seconds
-          reconnectTimer = setTimeout(connectSSE, 5000);
-        };
-        
-        es.onopen = () => {
-          console.log('SSE connection opened');
-        };
-        
-      } catch (err) {
-        console.error('SSE connection failed:', err);
-        // Retry after 5 seconds
-        reconnectTimer = setTimeout(connectSSE, 5000);
-      }
-    };
-    
-    connectSSE();
-    
-    return () => {
-      if (es) es.close();
-      if (reconnectTimer) clearTimeout(reconnectTimer);
-    };
-  }, [state.accessToken]);
-
-  // Polling fallback every 30s and on window focus
-  useEffect(() => {
-    if (!state.accessToken) return;
-    const id = setInterval(() => { refreshWallet(); }, 30000);
-    const onFocus = () => refreshWallet();
-    window.addEventListener('focus', onFocus);
-    return () => { clearInterval(id); window.removeEventListener('focus', onFocus); };
-  }, [state.accessToken]);
-
   const updateUser = (userData) => {
     dispatch({ type: 'UPDATE_USER', payload: userData });
     localStorage.setItem('user', JSON.stringify({ ...state.user, ...userData }));
+  };
+
+  const updateProfile = async (profileData) => {
+    try {
+      const response = await userAPI.updateProfile(profileData);
+      const updatedUser = response.data?.user || response.data?.data;
+
+      if (!response.data?.success || !updatedUser) {
+        return { success: false, error: response.data?.message || 'Profile update failed' };
+      }
+
+      updateUser(updatedUser);
+      return { success: true, user: updatedUser };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.message || 'Profile update failed'
+      };
+    }
   };
 
   const googleLogin = async (googleData) => {
@@ -352,7 +301,7 @@ export const AuthProvider = ({ children }) => {
 
       if (data.success) {
         const { accessToken, refreshToken, user } = data.data;
-        
+
         // Store tokens and user data
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
@@ -387,7 +336,7 @@ export const AuthProvider = ({ children }) => {
 
       if (data.success) {
         const { accessToken, refreshToken, user } = data.data;
-        
+
         // Store tokens and user data
         localStorage.setItem('accessToken', accessToken);
         localStorage.setItem('refreshToken', refreshToken);
@@ -407,33 +356,19 @@ export const AuthProvider = ({ children }) => {
       return { success: false, message: 'Network error occurred' };
     }
   };
-
-  // Make refreshWallet available globally for admin panel
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      window.refreshUserWallet = refreshWallet;
-    }
-    return () => {
-      if (typeof window !== 'undefined') {
-        delete window.refreshUserWallet;
-      }
-    };
-  }, []);
-
   return (
     <AuthContext.Provider value={{
       ...state,
       // Derived/computed helpers for consumers
       isAdmin: state.user?.role === 'admin',
       loading: state.isLoading,
-      walletBalancePaisa,
       login,
       register,
       verifyOTP,
       logout,
       refreshAccessToken,
-      refreshWallet,
       updateUser,
+      updateProfile,
       completeTwoFactorLogin,
       googleLogin,
       facebookLogin

@@ -1,0 +1,783 @@
+.gp-pay-container {
+  min-height: calc(100vh - 4rem);
+  width: 100%;
+  background: linear-gradient(to bottom, #1a1a1a, #2d2d2d);
+  padding: 2rem 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.gp-pay-wrapper {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  background-color: #1f1f1f;
+  border-radius: 1rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+.gp-pay-header {
+  display: flex;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background-color: #262626;
+  border-bottom: 1px solid #333;
+}
+
+.gp-pay-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  color: #9ca3af;
+  background-color: #333;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.gp-pay-back-btn:hover {
+  color: #fff;
+  background-color: #404040;
+  transform: translateX(-2px);
+}
+
+.payment-title {
+  font-size: 1.75rem;
+  font-weight: 600;
+  color: #fff;
+  margin-left: 1.5rem;
+}
+
+.payment-content {
+  padding: 2rem;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.payment-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 400px;
+  gap: 2rem;
+  align-items: start;
+  width: 100%;
+}
+
+/* Content Layout */
+.payment-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Payment Methods */
+.payment-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.payment-method-button {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background-color: #262626;
+  border: 2px solid #333;
+  border-radius: 1rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+.gp-pay-method-btn:hover:not(:disabled) {
+  border-color: #ff4757;
+  background-color: #2a2a2a;
+  transform: translateY(-2px);
+}
+
+.gp-pay-method-btn.selected {
+  border-color: #ff4757;
+  background-color: #2d2d2d;
+}
+
+.gp-pay-method-btn.selected::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background-color: #ff4757;
+}
+
+.gp-pay-method-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gp-pay-method-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 1rem;
+  background-color: #333;
+  color: #ff4757;
+  flex-shrink: 0;
+}
+
+.gp-pay-method-info {
+  flex: 1;
+}
+
+.gp-pay-method-title {
+  font-weight: 600;
+  color: #fff;
+  font-size: 1.125rem;
+  margin-bottom: 0.5rem;
+}
+
+.gp-pay-method-desc {
+  color: #9ca3af;
+  font-size: 0.875rem;
+}
+
+.wallet-balance {
+  color: #10b981;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+.insufficient-balance {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.guest-message {
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.payment-method-info {
+  flex: 1;
+}
+
+.payment-method-title {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 1.125rem;
+  margin-bottom: 0.25rem;
+}
+
+.payment-method-description {
+  color: #64748b;
+  font-size: 0.875rem;
+
+  flex-shrink: 0;
+}
+
+.payment-method-icon.fonepay {
+  background-color: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.payment-method-icon.wallet {
+  background-color: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.payment-method-info h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 0.5rem;
+}
+
+.payment-method-info p {
+  color: #64748b;
+  margin: 0;
+}
+
+.payment-details {
+  background-color: #f8fafc;
+  border-radius: 1rem;
+  padding: 2rem;
+}
+
+.gp-pay-qr-wrap {
+  margin-top: 2rem;
+  padding: 2rem;
+  background-color: #262626;
+  border-radius: 1rem;
+  border: 2px solid #333;
+}
+/* New compact grid to balance QR and summary */
+.gp-pay-qr-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+@media (max-width: 1024px) {
+  .gp-pay-qr-summary-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.gp-pay-qr-display {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.75rem;
+  padding: 1.25rem;
+  background: #1f1f1f;
+  border-radius: 0.75rem;
+}
+
+.gp-pay-qr-img {
+  max-width: 240px;
+  height: auto;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+/* Inline caption under QR to avoid long right column */
+.gp-pay-qr-inline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: #9ca3af;
+}
+
+.gp-pay-amount-inline {
+  color: #fff;
+  font-weight: 700;
+}
+
+.gp-pay-qr-hint {
+  font-size: 0.875rem;
+}
+
+/* CTA under QR */
+.gp-pay-qr-actions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+.gp-pay-btn-secondary {
+  background-color: transparent;
+  border: 1px solid #444;
+  color: #e5e7eb;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.gp-pay-btn-secondary:hover {
+  border-color: #ff4757;
+  color: #fff;
+}
+
+.gp-pay-qr-guide {
+  color: #9ca3af;
+}
+
+.gp-pay-qr-guide h3 {
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.gp-pay-qr-guide ol {
+  list-style: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.gp-pay-qr-guide li {
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.gp-pay-qr-note {
+  font-size: 0.875rem;
+  color: #ff4757;
+  font-style: italic;
+  margin-top: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Receipt Upload Section */
+.gp-pay-receipt-section {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #333;
+}
+
+.gp-pay-receipt-title {
+  color: #fff;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+/* Override receipt uploader styles to match payment page theme */
+.gp-receipt-button {
+  background-color: #262626;
+  border: 2px dashed #404040;
+  border-radius: 0.75rem;
+  padding: 2rem;
+  transition: all 0.2s ease;
+}
+
+.gp-receipt-button:hover {
+  border-color: #ff4757;
+  background-color: #2d2d2d;
+  transform: translateY(-2px);
+}
+
+.gp-receipt-button svg {
+  width: 2rem;
+  height: 2rem;
+  color: #ff4757;
+  margin-bottom: 0.5rem;
+}
+
+.gp-receipt-button span {
+  color: #9ca3af;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.gp-receipt-button:hover span {
+  color: #fff;
+}
+
+.qr-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.qr-image {
+  max-width: 300px;
+  height: auto;
+  border-radius: 0.5rem;
+}
+
+.change-qr-button {
+  background-color: #3b82f6;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.change-qr-button:hover {
+  background-color: #2563eb;
+}
+
+.hidden {
+  display: none;
+}
+
+.qr-instructions {
+  text-align: left;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.qr-instructions h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 1rem;
+}
+
+.qr-instructions ol {
+  padding-left: 1.25rem;
+  color: #475569;
+}
+
+.qr-instructions li {
+  margin-bottom: 0.5rem;
+}
+
+.qr-note {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin-top: 1rem;
+}
+
+.payment-summary {
+  background-color: #f8fafc;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  position: sticky;
+  top: 2rem;
+}
+
+.payment-summary h3 {
+  color: #1e293b;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.summary-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #334155;
+  font-size: 1rem;
+}
+
+.amount {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 1.125rem;
+}
+
+.guest-email {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+  color: #64748b;
+  font-size: 0.875rem;
+
+
+  min-height: 100vh;
+  padding: 2rem 0;
+  background-color: #f8f9fa;
+}
+
+.payment-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: white;
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.payment-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.back-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  transition: color 0.2s;
+}
+
+.back-button:hover {
+  color: var(--text-primary);
+}
+
+.gp-pay-title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #fff;
+  margin-left: 1.5rem;
+}
+
+.gp-pay-content {
+  padding: 2rem;
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.gp-pay-grid {
+  display: grid;
+  grid-template-columns: 320px minmax(680px, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+  width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .gp-pay-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Payment Methods */
+.gp-pay-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: 100%;
+}
+
+.gp-pay-method-btn {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  background-color: #262626;
+  border: 2px solid #333;
+  border-radius: 1rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+}
+
+.gp-pay-method-btn:hover:not(:disabled) {
+  border-color: #ff4757;
+  background-color: #2a2a2a;
+  transform: translateY(-2px);
+}
+
+.gp-pay-method-btn.selected {
+  border-color: #ff4757;
+  background-color: #2d2d2d;
+}
+
+.gp-pay-method-btn.selected::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 4px;
+  height: 100%;
+  background-color: #ff4757;
+}
+
+.gp-pay-method-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.gp-pay-method-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 1rem;
+  background-color: #333;
+  color: #ff4757;
+  flex-shrink: 0;
+}
+
+.gp-pay-method-icon.fonepay {
+  background-color: rgba(59, 130, 246, 0.2);
+  color: rgb(147, 197, 253);
+}
+
+.gp-pay-method-icon.wallet {
+  background-color: rgba(16, 185, 129, 0.2);
+  color: rgb(110, 231, 183);
+}
+
+.gp-pay-method-info {
+  flex: 1;
+}
+
+.gp-pay-method-title {
+  font-weight: 600;
+  color: #fff;
+  font-size: 1.125rem;
+  margin-bottom: 0.5rem;
+}
+
+.gp-pay-method-desc {
+  color: #9ca3af;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.gp-pay-wallet-balance {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background-color: rgba(16, 185, 129, 0.1);
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  color: #10b981;
+}
+
+.gp-pay-insufficient {
+  display: block;
+  color: #ff4757;
+  font-size: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+/* Payment Details */
+.gp-pay-details {
+  background-color: #262626;
+  border-radius: 1rem;
+  padding: 2rem;
+  border: 2px solid #333;
+}
+/* Right column inner grid: QR | Instructions */
+.gp-right-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .gp-right-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.gp-card {
+  background-color: #1f1f1f;
+  border: 1px solid #333;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.gp-instructions h3 {
+  color: #fff;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+}
+
+.gp-instructions ol {
+  color: #9ca3af;
+  padding-left: 1.25rem;
+  margin: 0 0 1rem;
+}
+
+.gp-divider {
+  height: 1px;
+  background: #333;
+  margin: 1rem 0;
+}
+
+.gp-empty-right {
+  color: #9ca3af;
+}
+
+/* Order Summary */
+.gp-pay-summary {
+  border-radius: 1rem;
+  padding: 1rem 1.25rem;
+  background-color: #1f1f1f;
+  border: 1px solid #333;
+  margin-top: 1rem;
+}
+
+.gp-pay-summary h3 {
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #333;
+}
+
+.gp-pay-summary-details {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.gp-pay-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #9ca3af;
+}
+
+.gp-pay-amount {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #ff4757;
+}
+
+.gp-pay-guest-email {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  padding-top: 0.75rem;
+  border-top: 1px solid #333;
+}
+
+/* Payment Button */
+.gp-pay-btn {
+  width: 100%;
+  background-color: #ff4757;
+  color: white;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 1rem;
+  margin-top: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.gp-pay-btn:hover:not(:disabled) {
+  background-color: #ff5e6a;
+  transform: translateY(-2px);
+}
+
+.gp-pay-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.gp-pay-btn.loading {
+  cursor: wait;
+}
+
+.gp-pay-loading-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

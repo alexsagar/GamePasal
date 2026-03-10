@@ -6,17 +6,25 @@ import { CartProvider } from './context/CartContext';
 import Navbar from './components/Navbar/Navbar';
 import Footer from './components/Footer/Footer';
 import ScrollToTop from './components/ScrollToTop';
+import CartRecommendationDrawer from './components/CartRecommendationDrawer/CartRecommendationDrawer';
 import Home from './pages/Home/Home';
 import Products from './pages/Products/Products';
 import Software from './pages/Software/Software';
 import ProductDetail from './pages/ProductDetail/ProductDetail';
 import Cart from './pages/Cart/Cart';
 import Checkout from './pages/Checkout/Checkout';
+import Review from './pages/Checkout/Review';
+import Payment from './pages/Checkout/Payment.jsx';
+import OrderConfirmation from './pages/Checkout/OrderConfirmation';
+import Method from './pages/Payment/Method';
 import Profile from './pages/Profile/Profile';
 import Login from './pages/Auth/Login';
 import Signup from './pages/Auth/Signup';
+import VerifyOTP from './pages/Auth/VerifyOTP';
 import PaymentSuccess from './pages/Payment/PaymentSuccess';
 import PaymentFailure from './pages/Payment/PaymentFailure';
+import EsewaSuccess from './pages/Payment/EsewaSuccess';
+import EsewaFailure from './pages/Payment/EsewaFailure';
 const AdminPanel = lazy(() => import('./pages/Admin/AdminPanel'));
 import ProtectedRoute from './components/ProtectedRoute/ProtectedRoute';
 import { Toaster } from 'react-hot-toast';
@@ -37,24 +45,44 @@ import './App.css';
 const AppContent = () => {
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const isAuthRoute = location.pathname === '/login' || location.pathname === '/signup' || location.pathname === '/verify-otp';
 
   return (
     <div className="App">
       <Navbar />
       <main className="main-content">
         <Routes>
-          
+
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />
           <Route path="/products/:category" element={<Products />} />
-          <Route path="/software" element={<Products />} />
+          <Route path="/software" element={<Software />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/checkout/review" element={
+            <ProtectedRoute>
+              <Review />
+            </ProtectedRoute>
+          } />
+          <Route path="/checkout/payment" element={
+            <ProtectedRoute>
+              <Payment />
+            </ProtectedRoute>
+          } />
+          <Route path="/payment/method" element={
+            <ProtectedRoute>
+              <Method />
+            </ProtectedRoute>
+          } />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/verify-otp" element={<VerifyOTP />} />
           <Route path="/payment/success" element={<PaymentSuccess />} />
           <Route path="/payment/failure" element={<PaymentFailure />} />
+          <Route path="/payment/esewa/success" element={<EsewaSuccess />} />
+          <Route path="/payment/esewa/failure" element={<EsewaFailure />} />
+          <Route path="/checkout/confirmation" element={<OrderConfirmation />} />
           {/* Static pages */}
           <Route path="/about" element={<About />} />
           <Route path="/careers" element={<Careers />} />
@@ -66,35 +94,36 @@ const AppContent = () => {
           <Route path="/contact" element={<Contact />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
-          <Route 
-            path="/profile" 
+          <Route
+            path="/profile"
             element={
               <ProtectedRoute>
                 <Profile />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/profile/:section" 
+          <Route
+            path="/profile/:section"
             element={
               <ProtectedRoute>
                 <Profile />
               </ProtectedRoute>
-            } 
+            }
           />
-          <Route 
-            path="/admin/*" 
+          <Route
+            path="/admin/*"
             element={
               <ProtectedRoute adminOnly={true}>
                 <Suspense fallback={<div>Loading...</div>}>
                   <AdminPanel />
                 </Suspense>
               </ProtectedRoute>
-            } 
+            }
           />
         </Routes>
       </main>
-      {!isAdminRoute && <Footer />}
+      {!isAdminRoute && !location.pathname.startsWith('/checkout') && <CartRecommendationDrawer />}
+      {!isAdminRoute && !isAuthRoute && <Footer />}
     </div>
   );
 };
@@ -109,7 +138,7 @@ function App() {
       <GoogleOAuthProvider clientId={googleClientId}>
         <AuthProvider>
           <CartProvider>
-            <Router>
+            <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
               <ScrollToTop />
               <AppContent />
             </Router>

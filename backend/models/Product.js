@@ -13,9 +13,17 @@ const productSchema = new mongoose.Schema({
     enum: ['Game', 'GiftCard', 'Software'],
     default: 'Game'
   },
+  delivery_type: {
+    type: String,
+    enum: ['gift_card_code', 'game_redeem_code', 'game_login_details'],
+    required: function () {
+      // Required if it's a digital gift card or game, but let's make it optional for backward compatibility
+      return false;
+    }
+  },
   platform: {
     type: String,
-    enum: ['PC','PlayStation','Xbox','Nintendo','Steam','Mobile','iTunes','All'],
+    enum: ['PC', 'PlayStation', 'Xbox', 'Nintendo', 'Steam', 'Mobile', 'iTunes', 'All'],
     required: function () {
       return this.category === 'Game' || this.category === 'GiftCard';
     }
@@ -34,7 +42,7 @@ const productSchema = new mongoose.Schema({
     type: Number,
     min: [0, 'Sale price cannot be negative'],
     validate: {
-      validator: function(value) {
+      validator: function (value) {
         return !value || value < this.price;
       },
       message: 'Sale price must be less than regular price'
@@ -58,6 +66,15 @@ const productSchema = new mongoose.Schema({
     enum: ['Action', 'Adventure', 'RPG', 'Strategy', 'Sports', 'Racing', 'Simulation', 'Puzzle', 'Fighting', 'Shooter', 'Other'],
     default: undefined
   },
+  region: {
+    type: String,
+    trim: true,
+    default: undefined
+  },
+  tags: [{
+    type: String,
+    trim: true
+  }],
   rating: {
     type: Number,
     min: [0, 'Rating cannot be less than 0'],
@@ -96,7 +113,7 @@ const productSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  
+
   isTopSeller: {
     type: Boolean,
     default: false
@@ -130,11 +147,15 @@ productSchema.index({
   title: 'text',
   description: 'text',
   genre: 'text',
-  platform: 'text'
+  platform: 'text',
+  publisher: 'text',
+  developer: 'text',
+  region: 'text',
+  tags: 'text'
 });
 
 // Virtual for discount percentage
-productSchema.virtual('discountPercentage').get(function() {
+productSchema.virtual('discountPercentage').get(function () {
   if (this.salePrice && this.price > this.salePrice) {
     return Math.round(((this.price - this.salePrice) / this.price) * 100);
   }

@@ -1,0 +1,141 @@
+.gp-confirm-container {
+  min-height: 100vh;
+  width: 100%;
+  background: linear-gradient(to bottom, #1a1a1a, #2d2d2d);
+  padding: 2rem 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.gp-confirm-wrapper {
+  width: 100%;
+  max-width: 600px;
+  background-color: #262626;
+  border-radius: 1.5rem;
+  padding: 3rem 2rem;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.gp-confirm-icon {
+  font-size: 4rem;
+  margin-bottom: 1.5rem;
+  animation: scaleIn 0.5s ease-out 0.2s both;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.8);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+.gp-confirm-title {
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 2rem;
+}
+
+.gp-confirm-details {
+  margin-bottom: 3rem;
+}
+
+.gp-confirm-message {
+  color: #9ca3af;
+  font-size: 1.125rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.gp-confirm-email {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: #10b981;
+  font-size: 0.875rem;
+  margin: 1.5rem 0;
+  padding: 1rem;
+  background-color: rgba(16, 185, 129, 0.1);
+  border-radius: 0.75rem;
+}
+
+.gp-confirm-order {
+  color: #9ca3af;
+  font-size: 0.875rem;
+}
+
+.gp-confirm-order strong {
+  color: #fff;
+  font-family: monospace;
+  background-color: #333;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  margin-left: 0.5rem;
+}
+
+.gp-confirm-contact {
+  margin-top: 3rem;
+  padding-top: 2rem;
+  border-top: 1px solid #333;
+}
+
+.gp-confirm-contact h2 {
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.gp-confirm-contact p {
+  color: #9ca3af;
+  margin-bottom: 1.5rem;
+}
+
+.gp-confirm-instagram {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background-color: #333;
+  color: #fff;
+  padding: 1rem 2rem;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+  margin: 0 auto;
+  width: fit-content;
+}
+
+.gp-confirm-instagram:hover {
+  background-color: #404040;
+  transform: translateY(-2px);
+}
+
+.gp-confirm-home {
+  display: inline-block;
+  margin-top: 2rem;
+  color: #9ca3af;
+  font-size: 0.875rem;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.gp-confirm-home:hover {
+  color: #fff;
+}

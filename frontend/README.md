@@ -1,12 +1,62 @@
-# React + Vite
+# Frontend Application
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This directory contains the React frontend for GamePasal.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- React
+- Vite
+- React Router
+- Axios
+- Swiper
+- Lucide React
 
-## Expanding the ESLint configuration
+## Main Responsibilities
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- product browsing and search
+- cart and checkout UI
+- eSewa payment handoff and callback pages
+- user authentication screens
+- profile and order history views
+- admin panel UI
+- content presentation such as banners, reviews, and benefits
+
+## Common Commands
+
+```bash
+npm install
+npm run dev
+npm run lint
+npm run build
+```
+
+## Environment Variables
+
+Typical `frontend/.env`:
+
+```env
+VITE_API_URL=http://localhost:5000/api
+VITE_GOOGLE_CLIENT_ID=your_google_client_id
+```
+
+## Important Routes
+
+- `/`
+- `/products`
+- `/software`
+- `/product/:id`
+- `/cart`
+- `/checkout/review`
+- `/checkout/payment`
+- `/payment/esewa/success`
+- `/payment/esewa/failure`
+- `/profile`
+- `/admin/*`
+
+## Implementation Notes
+
+- The app uses context providers for authentication and cart state.
+- Checkout UI should always display the same total that the backend will charge.
+- Recommendation UI is content-based and reused across product detail and post-add-to-cart flows.
+- Admin pages depend on the authenticated backend API and are not standalone.
+

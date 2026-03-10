@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  Lock, 
-  ShoppingBag, 
+import {
+  User,
+  Mail,
+  Phone,
+  Lock,
+  ShoppingBag,
   Settings,
   Eye,
   EyeOff,
@@ -22,10 +22,13 @@ import {
   CheckCircle,
   XCircle
 } from 'lucide-react';
-import api, { walletAPI } from '../../services/api';
+import api from '../../services/api';
 import paymentAPI from '../../services/paymentAPI';
 import PaymentMethodSelector from '../../components/PaymentMethodSelector/PaymentMethodSelector';
+import MaskedSecret from '../../components/MaskedSecret/MaskedSecret';
+import OrderStatusBadge from '../../components/OrderStatusBadge/OrderStatusBadge';
 import { toDataURL as qrToDataURL } from 'qrcode';
+import { getOrderStatusLabel, normalizeOrderStatus as normalizeOrderState } from '../../utils/orderStatus';
 import './Profile.css';
 
 const Profile = () => {
@@ -37,7 +40,7 @@ const Profile = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
-  
+
   const [formData, setFormData] = useState({
     username: user?.username || '',
     email: user?.email || '',
@@ -48,6 +51,7 @@ const Profile = () => {
   });
 
   const [orders, setOrders] = useState([]);
+  const [orderFilter, setOrderFilter] = useState('all');
   const [ordersLoading, setOrdersLoading] = useState(false);
 
   // Social Media and 2FA states
@@ -67,7 +71,7 @@ const Profile = () => {
 
   // Sync active tab with URL param
   useEffect(() => {
-    const allowedTabs = ['profile', 'orders', 'wishlist', 'wallet', 'settings'];
+    const allowedTabs = ['profile', 'orders', 'wishlist', 'settings'];
     const next = section && allowedTabs.includes(section) ? section : 'profile';
     setActiveTab(next);
   }, [section]);
@@ -86,183 +90,18 @@ const Profile = () => {
     }
   }, [user]);
 
-  // Wallet state
-  const [walletLoading, setWalletLoading] = useState(false);
-  const [walletBalancePaisa, setWalletBalancePaisa] = useState(0);
-  const [walletCurrency, setWalletCurrency] = useState('GP Credits');
-  const [walletTransactions, setWalletTransactions] = useState([]);
-  const [topupAmountNPR, setTopupAmountNPR] = useState('');
-  const [topupReferenceNote, setTopupReferenceNote] = useState('');
-  const [currentTopupTxnId, setCurrentTopupTxnId] = useState('');
-  const [qrMeta, setQrMeta] = useState(null);
-  const [receiptFile, setReceiptFile] = useState(null);
-  
-  // Payment gateway states
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
-  const [paymentLoading, setPaymentLoading] = useState(false);
-  const [showPaymentMethods, setShowPaymentMethods] = useState(false);
-
-  const formatNPR = (paisa) => `NRS ${(Math.round(paisa) / 100).toFixed(2)}`;
-
-  const fetchWallet = async () => {
-    setWalletLoading(true);
-    try {
-      const res = await walletAPI.getMyWallet({ page: 1, limit: 20 });
-      const d = res.data?.data || {};
-      setWalletBalancePaisa(d.balancePaisa || 0);
-      setWalletCurrency(d.currency || 'GP Credits');
-      setWalletTransactions(d.transactions || []);
-    } catch (e) {
-      console.error('Wallet load error:', e);
-    } finally {
-      setWalletLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (activeTab === 'wallet') {
-      fetchWallet();
-    }
-  }, [activeTab]);
-
-  const initTopup = async () => {
-    const amountNum = Number(topupAmountNPR);
-    if (!amountNum || amountNum < 100 || amountNum > 25000) {
-      setMessage({ type: 'error', text: 'Enter amount between NPR 100 and 25,000' });
-      return;
-    }
-    setMessage({ type: '', text: '' });
-    try {
-      const idempotencyKey = (window.crypto?.randomUUID && window.crypto.randomUUID()) || `${Date.now()}-${Math.random()}`;
-      const res = await walletAPI.initTopupEsewaQR({
-        amountPaisa: Math.round(amountNum * 100),
-        idempotencyKey,
-        referenceNote: topupReferenceNote || ''
-      });
-      if (res.data?.success) {
-        setCurrentTopupTxnId(res.data.data.txnId);
-        setQrMeta(res.data.data.qr);
-        setMessage({ type: 'success', text: 'Top-up ticket created. Upload your receipt after payment.' });
-      } else {
-        setMessage({ type: 'error', text: res.data?.message || 'Failed to create top-up ticket' });
-      }
-    } catch (e) {
-      setMessage({ type: 'error', text: 'Failed to create top-up ticket' });
-    }
-  };
-
-  const uploadReceipt = async () => {
-    if (!currentTopupTxnId || !receiptFile) {
-      setMessage({ type: 'error', text: 'Please select a receipt file' });
-      return;
-    }
-    try {
-      const fd = new FormData();
-      fd.append('txnId', currentTopupTxnId);
-      fd.append('file', receiptFile);
-      if (topupReferenceNote) fd.append('referenceNote', topupReferenceNote);
-      const res = await walletAPI.uploadReceipt(fd);
-      if (res.data?.success) {
-        setMessage({ type: 'success', text: 'Receipt uploaded. Your top-up is under review.' });
-        setReceiptFile(null);
-        fetchWallet();
-      } else {
-        setMessage({ type: 'error', text: res.data?.message || 'Failed to upload receipt' });
-      }
-    } catch (e) {
-      setMessage({ type: 'error', text: 'Failed to upload receipt' });
-    }
-  };
-
-  // Payment gateway functions
-  const handlePaymentMethodChange = (method) => {
-    setSelectedPaymentMethod(method);
-  };
-
-  const handlePaymentInitiate = async (method) => {
-    const amountNum = Number(topupAmountNPR);
-    if (!amountNum || amountNum < 100 || amountNum > 100000) {
-      setMessage({ type: 'error', text: 'Enter amount between NPR 100 and 100,000' });
-      return;
-    }
-
-    setPaymentLoading(true);
-    setMessage({ type: '', text: '' });
-
-    try {
-      const idempotencyKey = (window.crypto?.randomUUID && window.crypto.randomUUID()) || `${Date.now()}-${Math.random()}`;
-      
-      if (method === 'esewa-qr') {
-        // Use existing QR method
-        const res = await walletAPI.initTopupEsewaQR({
-          amountPaisa: Math.round(amountNum * 100),
-          idempotencyKey,
-          referenceNote: topupReferenceNote || ''
-        });
-        
-        if (res.data?.success) {
-          setCurrentTopupTxnId(res.data.data.txnId);
-          setQrMeta(res.data.data.qr);
-          setMessage({ type: 'success', text: 'Top-up ticket created. Upload your receipt after payment.' });
-        } else {
-          setMessage({ type: 'error', text: res.data?.message || 'Failed to create top-up ticket' });
-        }
-      } else if (method === 'esewa' || method === 'khalti') {
-        // Use gateway payment
-        const res = await paymentAPI.initTopupGateway({
-          amountPaisa: Math.round(amountNum * 100),
-          gateway: method.toUpperCase(),
-          idempotencyKey,
-          referenceNote: topupReferenceNote || ''
-        });
-        
-        if (res.data?.success) {
-          if (res.data.data.gateway === 'ESEWA' && res.data.data.formData) {
-            // For eSewa, submit form data
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = res.data.data.paymentUrl;
-            form.target = '_self';
-            
-            Object.keys(res.data.data.formData).forEach(key => {
-              const input = document.createElement('input');
-              input.type = 'hidden';
-              input.name = key;
-              input.value = res.data.data.formData[key];
-              form.appendChild(input);
-            });
-            
-            document.body.appendChild(form);
-            form.submit();
-          } else if (res.data.data.paymentUrl) {
-            // For other gateways, redirect to payment gateway
-            window.location.href = res.data.data.paymentUrl;
-          } else {
-            setMessage({ type: 'error', text: 'Payment URL not received' });
-          }
-        } else {
-          setMessage({ type: 'error', text: res.data?.message || 'Failed to initiate payment' });
-        }
-      }
-    } catch (e) {
-      console.error('Payment initiation error:', e);
-      setMessage({ type: 'error', text: 'Failed to initiate payment' });
-    } finally {
-      setPaymentLoading(false);
-    }
-  };
 
   const fetchUserSecurityInfo = async () => {
     try {
       const response = await api.get('/auth/me');
       const userData = response?.data?.data ?? response?.data?.user ?? response?.data ?? {};
-      
+
       setSocialAccounts({
         google: userData?.socialAccounts?.google?.verified || false,
         facebook: userData?.socialAccounts?.facebook?.verified || false,
         twitter: userData?.socialAccounts?.twitter?.verified || false
       });
-      
+
       setTwoFactorEnabled(userData?.twoFactorAuth?.enabled || false);
     } catch (error) {
       console.error('Error fetching user security info:', error);
@@ -280,6 +119,28 @@ const Profile = () => {
     } finally {
       setOrdersLoading(false);
     }
+  };
+
+  // Image helper for order products
+  const RAW_ROOT = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+  const API_ROOT = (RAW_ROOT || '').replace(/\/$/, '');
+  const getProductImage = (img) => {
+    if (!img) return '';
+    return img.startsWith('http') ? img : `${API_ROOT}/uploads/${img}`;
+  };
+
+  const getDisplayStatus = (order) => {
+    return getOrderStatusLabel(order?.rawStatus || order?.status, order?.paymentStatus);
+  };
+
+  const statusChipStyle = (label) => {
+    const base = { display: 'inline-block', borderRadius: 8, padding: '4px 10px', fontSize: 13, fontWeight: 600 };
+    if (label === 'Completed') return { ...base, background: '#10b9811a', color: '#10b981' };
+    if (label === 'Delivered') return { ...base, background: '#14b8a61a', color: '#14b8a6' };
+    if (label === 'Payment Verified') return { ...base, background: '#0596691a', color: '#059669' };
+    if (label === 'Cancelled') return { ...base, background: '#ef44441a', color: '#ef4444' };
+    if (label === 'Order Placed' || label === 'Payment Pending') return { ...base, background: '#f59e0b1a', color: '#f59e0b' };
+    return { ...base, background: '#3b82f61a', color: '#3b82f6' }; // Processing (Blue)
   };
 
   const deleteOrder = async (orderId) => {
@@ -302,12 +163,12 @@ const Profile = () => {
     if (paymentStatus === 'pending') {
       return '#ff9f43'; // Orange for pending
     }
-    
+
     // If payment is failed or cancelled, show error status
     if (paymentStatus === 'failed' || paymentStatus === 'cancelled') {
       return '#ff4757'; // Red for failed/cancelled
     }
-    
+
     // If payment is completed, show order status
     switch (status) {
       case 'delivered': return '#00d4aa'; // Green for delivered
@@ -338,7 +199,8 @@ const Profile = () => {
 
   const canDeleteOrder = (order) => {
     // Users can only delete orders that are pending or cancelled
-    return order.status === 'pending' || order.status === 'cancelled' || order.paymentStatus === 'pending';
+    const normalized = normalizeOrderState(order.status, order.paymentStatus);
+    return normalized === 'payment_pending' || normalized === 'cancelled';
   };
 
   // Social Media Linking Functions
@@ -391,7 +253,7 @@ const Profile = () => {
   const setup2FA = async () => {
     try {
       const response = await api.post('/auth/setup-2fa');
-      
+
       if (response.data.success) {
         const { secret, backupCodes, otpauthUrl, qrCode } = response.data.data || {};
         setTwoFASecret(secret || '');
@@ -450,7 +312,7 @@ const Profile = () => {
 
     try {
       const response = await api.delete('/auth/disable-2fa');
-      
+
       if (response.data.success) {
         setMessage({ type: 'success', text: '2FA disabled successfully!' });
         fetchUserSecurityInfo();
@@ -498,7 +360,7 @@ const Profile = () => {
       }
 
       const result = await updateProfile(updateData);
-      
+
       if (result.success) {
         setMessage({ type: 'success', text: 'Profile updated successfully!' });
         setIsEditing(false);
@@ -514,7 +376,7 @@ const Profile = () => {
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to update profile' });
     }
-    
+
     setLoading(false);
   };
 
@@ -522,7 +384,6 @@ const Profile = () => {
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'orders', label: 'Order History', icon: ShoppingBag },
     { id: 'wishlist', label: 'Wishlist', icon: CheckCircle },
-    { id: 'wallet', label: 'Wallet', icon: Smartphone },
     { id: 'settings', label: 'Settings', icon: Settings }
   ];
 
@@ -633,7 +494,7 @@ const Profile = () => {
                     <>
                       <div className="password-section">
                         <h3>Change Password (Optional)</h3>
-                        
+
                         <div className="form-group">
                           <label className="form-label">Current Password</label>
                           <div className="input-group">
@@ -705,9 +566,21 @@ const Profile = () => {
 
             {activeTab === 'orders' && (
               <div className="orders-section">
-                <div className="section-header">
+                <div className="section-header" style={{ alignItems: 'center' }}>
                   <h2>Order History</h2>
-                  <p>{orders.length} orders found</p>
+                  <div style={{ marginLeft: 'auto' }}>
+                    <select
+                      value={orderFilter}
+                      onChange={(e) => setOrderFilter(e.target.value)}
+                      className="form-select"
+                      style={{ background: '#111', color: '#e5e7eb', border: '1px solid #333', padding: '8px 12px', borderRadius: 8 }}
+                    >
+                      <option value="all">All orders</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Processing">Processing</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </div>
                 </div>
 
                 {ordersLoading ? (
@@ -721,55 +594,27 @@ const Profile = () => {
                     No orders found. Start shopping!
                   </div>
                 ) : (
-                  <div className="orders-list">
-                    {orders.map((order) => (
-                      <div key={order.id} className="order-card">
-                        <div className="order-header">
-                          <div className="order-info">
-                            <h3>Order #{order.id}</h3>
-                            <p>Placed on {new Date(order.createdAt).toLocaleDateString()}</p>
-                          </div>
-                          <div className="order-status">
-                            <span 
-                              className="status-badge"
-                              style={{ backgroundColor: getStatusColor(order.status, order.paymentStatus) }}
-                            >
-                              {getStatusText(order.status, order.paymentStatus)}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="order-items">
-                          {order.products.map((item, index) => (
-                            <div key={index} className="order-item">
-                              <span className="item-name">{item.title}</span>
-                              <span className="item-price">NRS {item.salePrice || item.price}</span>
-                            </div>
-                          ))}
-                        </div>
-
-                        <div className="order-footer">
-                          <div className="order-total">
-                            Total: NRS {order.totalAmount}
-                          </div>
-                          <div className="order-actions">
-                            <button className="btn btn-outline">
-                              View Details
-                            </button>
-                            {canDeleteOrder(order) && (
-                              <button 
-                                className="btn btn-outline danger"
-                                onClick={() => deleteOrder(order.id)}
-                                disabled={loading}
-                              >
-                                <Trash2 size={16} />
-                                Delete
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="orders-split-list">
+                    {orders
+                      .map((o) => ({
+                        id: o.orderNumber || o.orderCode || o.id || o._id,
+                        realId: o._id,
+                        date: o.createdAt,
+                        status: getDisplayStatus(o),
+                        rawStatus: o.status,
+                        paymentStatus: o.paymentStatus,
+                        total: o.totalAmount,
+                        product: o.products?.[0],
+                        allProducts: o.products
+                      }))
+                      .filter((row) => orderFilter === 'all' ? true : row.status === orderFilter)
+                      .map((row) => (
+                        <ExpandableOrderRow
+                          key={row.realId}
+                          order={row}
+                          getProductImage={getProductImage}
+                        />
+                      ))}
                   </div>
                 )}
               </div>
@@ -832,7 +677,7 @@ const Profile = () => {
                 <div className="social-linking-section">
                   <h3>Linked Accounts</h3>
                   <p>Connect your social media accounts for easier login and verification</p>
-                  
+
                   <div className="social-accounts-grid">
                     <div className="social-account-card">
                       <div className="social-account-info">
@@ -845,16 +690,16 @@ const Profile = () => {
                       {socialAccounts.facebook ? (
                         <div className="social-account-actions">
                           <span className="status-badge linked">Linked</span>
-                          <button 
-                            className="btn btn-outline danger" 
+                          <button
+                            className="btn btn-outline danger"
                             onClick={() => unlinkSocialAccount('facebook')}
                           >
                             Unlink
                           </button>
                         </div>
                       ) : (
-                        <button 
-                          className="btn btn-outline" 
+                        <button
+                          className="btn btn-outline"
                           onClick={() => linkSocialAccount('facebook')}
                         >
                           Link Account
@@ -873,16 +718,16 @@ const Profile = () => {
                       {socialAccounts.google ? (
                         <div className="social-account-actions">
                           <span className="status-badge linked">Linked</span>
-                          <button 
-                            className="btn btn-outline danger" 
+                          <button
+                            className="btn btn-outline danger"
                             onClick={() => unlinkSocialAccount('google')}
                           >
                             Unlink
                           </button>
                         </div>
                       ) : (
-                        <button 
-                          className="btn btn-outline" 
+                        <button
+                          className="btn btn-outline"
                           onClick={() => linkSocialAccount('google')}
                         >
                           Link Account
@@ -901,16 +746,16 @@ const Profile = () => {
                       {socialAccounts.twitter ? (
                         <div className="social-account-actions">
                           <span className="status-badge linked">Linked</span>
-                          <button 
-                            className="btn btn-outline danger" 
+                          <button
+                            className="btn btn-outline danger"
                             onClick={() => unlinkSocialAccount('twitter')}
                           >
                             Unlink
                           </button>
                         </div>
                       ) : (
-                        <button 
-                          className="btn btn-outline" 
+                        <button
+                          className="btn btn-outline"
                           onClick={() => linkSocialAccount('twitter')}
                         >
                           Link Account
@@ -944,118 +789,7 @@ const Profile = () => {
               </div>
             )}
 
-            {activeTab === 'wallet' && (
-              <div className="settings-section">
-                <div className="section-header">
-                  <h2>GP Credits Wallet</h2>
-                  <p>Top-up via eSewa QR and upload receipt for review</p>
-                </div>
 
-                <div className="setting-card" style={{ marginBottom: 16 }}>
-                  <h3>Balance</h3>
-                  {walletLoading ? (
-                    <p className="muted">Loading balance…</p>
-                  ) : (
-                    <p style={{ fontSize: 18, fontWeight: 700 }}>{formatNPR(walletBalancePaisa)} <span className="muted">({walletCurrency})</span></p>
-                  )}
-                </div>
-
-                <div className="setting-card" style={{ marginBottom: 16 }}>
-                  <h3>Add Funds to Wallet</h3>
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label className="form-label">Amount (NPR)</label>
-                      <input 
-                        className="form-input" 
-                        type="number" 
-                        min="100" 
-                        max="100000" 
-                        value={topupAmountNPR} 
-                        onChange={(e)=>setTopupAmountNPR(e.target.value)} 
-                        placeholder="e.g., 1000" 
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Reference Note (optional)</label>
-                      <input 
-                        className="form-input" 
-                        type="text" 
-                        value={topupReferenceNote} 
-                        onChange={(e)=>setTopupReferenceNote(e.target.value)} 
-                        placeholder="Reference note" 
-                      />
-                    </div>
-                  </div>
-                  
-                  <div style={{ marginTop: 16 }}>
-                    <button 
-                      className="btn btn-outline" 
-                      onClick={() => setShowPaymentMethods(!showPaymentMethods)}
-                      style={{ marginBottom: 16 }}
-                    >
-                      {showPaymentMethods ? 'Hide Payment Methods' : 'Choose Payment Method'}
-                    </button>
-                    
-                    {showPaymentMethods && (
-                      <PaymentMethodSelector
-                        selectedMethod={selectedPaymentMethod}
-                        onMethodChange={handlePaymentMethodChange}
-                        amount={Math.round(Number(topupAmountNPR) * 100) || 0}
-                        onPaymentInitiate={handlePaymentInitiate}
-                        loading={paymentLoading}
-                        disabled={!topupAmountNPR || Number(topupAmountNPR) < 100}
-                      />
-                    )}
-                  </div>
-                </div>
-
-                {qrMeta && (
-                  <div className="setting-card" style={{ marginBottom: 16 }}>
-                    <h3>Scan & Pay</h3>
-                    <p className="muted">Scan the eSewa QR to pay, then upload your receipt. We’ll verify within 24 hours.</p>
-                    <div style={{ display:'flex', gap:16, alignItems:'center', flexWrap:'wrap' }}>
-                      <img src={qrMeta.qrUrl} alt="eSewa QR" style={{ width: 200, height: 200, background:'#fff', padding:8, borderRadius:8 }} />
-                      <div>
-                        <p><strong>Account:</strong> {qrMeta.accountName}</p>
-                        <p><strong>eSewa ID:</strong> {qrMeta.esewaId}</p>
-                        <p className="muted">Include note: GamePasal {user?.username}</p>
-                        <div style={{ marginTop: 12 }}>
-                          <input type="file" accept="image/*,application/pdf" onChange={(e)=>setReceiptFile(e.target.files?.[0]||null)} />
-                          <button className="btn btn-outline" style={{ marginLeft: 8 }} onClick={uploadReceipt} disabled={!receiptFile}>Upload Receipt</button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="setting-card">
-                  <h3>Transactions</h3>
-                  {walletLoading ? (
-                    <p className="muted">Loading…</p>
-                  ) : walletTransactions.length === 0 ? (
-                    <p className="muted">No wallet transactions yet.</p>
-                  ) : (
-                    <div className="orders-list">
-                      {walletTransactions.map((t) => (
-                        <div key={t._id} className="order-card" style={{ display:'grid', gridTemplateColumns: '1fr auto', gap: 8 }}>
-                          <div>
-                            <div style={{ fontWeight:600 }}>{t.type} · {t.method}</div>
-                            <div className="muted">{new Date(t.createdAt).toLocaleString()}</div>
-                            {t.referenceNote && <div className="muted">Ref: {t.referenceNote}</div>}
-                            {t.adminNote && <div className="muted">Admin: {t.adminNote}</div>}
-                            {t.receiptUrl && <a href={t.receiptUrl} target="_blank" rel="noopener noreferrer">View receipt</a>}
-                          </div>
-                          <div style={{ textAlign:'right' }}>
-                            <div style={{ fontWeight:700 }}>{formatNPR(t.amount)}</div>
-                            <span className="status-badge" style={{ backgroundColor: t.status==='SUCCESS' ? '#00d4aa' : t.status==='REJECTED' ? '#ff4757' : '#ff9f43' }}>{t.status.replace('_',' ')}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -1070,7 +804,7 @@ const Profile = () => {
                 <XCircle size={20} />
               </button>
             </div>
-            
+
             <div className="modal-content">
               <div className="twofa-setup-steps">
                 <div className="step">
@@ -1113,7 +847,7 @@ const Profile = () => {
                       <span key={index} className="backup-code">{code}</span>
                     ))}
                   </div>
-                  <button 
+                  <button
                     className="btn btn-outline"
                     onClick={() => setShowBackupCodes(!showBackupCodes)}
                   >
@@ -1131,6 +865,135 @@ const Profile = () => {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Sub-component for expandable orders
+const ExpandableOrderRow = ({ order, getProductImage }) => {
+  const [expanded, setExpanded] = useState(false);
+  const [deliveries, setDeliveries] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchDeliveries = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get(`/orders/${order.realId}/delivery`);
+      setDeliveries(res.data.data || []);
+    } catch (e) {
+      console.error('Error fetching deliveries:', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggle = () => {
+          const normalized = normalizeOrderState(order.rawStatus, order.paymentStatus);
+          const isReady = normalized === 'completed' || normalized === 'delivered';
+    if (!expanded && isReady && deliveries.length === 0) {
+      fetchDeliveries();
+    }
+    setExpanded(!expanded);
+  };
+
+  return (
+    <div className={`order-row-container ${expanded ? 'expanded' : ''}`} style={{ border: '1px solid #333', borderRadius: '8px', marginBottom: '12px', overflow: 'hidden' }}>
+      <div className="order-row" onClick={handleToggle} style={{ cursor: 'pointer', border: 'none', margin: 0, padding: '16px', background: '#1c1c1c' }}>
+        <div className="order-row-left">
+          <div className="order-thumb">
+            <img src={getProductImage(order.product?.image)} alt={order.product?.title || 'Product'} />
+          </div>
+          <div>
+            <h6 className="order-title">{order.product?.title || 'Digital Product'}</h6>
+            <p className="order-id">Order ID: <span>#{order.id}</span></p>
+          </div>
+        </div>
+        <div className="order-col">
+          <h6 className="muted-sm">Date</h6>
+          <p className="order-text">{new Date(order.date).toLocaleDateString()}</p>
+        </div>
+        <div className="order-col">
+          <h6 className="muted-sm">Status</h6>
+          <OrderStatusBadge status={order.rawStatus} paymentStatus={order.paymentStatus} />
+        </div>
+        <div className="order-col" style={{ marginLeft: 'auto' }}>
+          <h6 className="muted-sm">Price</h6>
+          <p className="order-text">NRS {order.total?.toFixed ? order.total.toFixed(2) : order.total}</p>
+        </div>
+      </div>
+
+      {expanded && (
+        <div className="order-expanded-details" style={{ padding: '20px', background: '#111', borderTop: '1px solid #333' }}>
+          <h4 style={{ margin: '0 0 16px 0', fontSize: '1.1rem' }}>Order Details</h4>
+
+          <div className="order-products-list" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {order.allProducts?.map((item, idx) => {
+              // Find matching delivery record if completed
+              const deliveryRecord = deliveries.find((d) =>
+                String(d.productId?._id || d.productId) === String(item.productId?._id || item.productId)
+              );
+
+              return (
+                <div key={idx} style={{ padding: '16px', backgroundColor: '#1a1a1a', borderRadius: '8px', border: '1px solid #2a2a2a' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                    <h5 style={{ margin: 0 }}>{item.title} (x{item.quantity})</h5>
+                    <span style={{ fontWeight: 600 }}>NRS {item.price * item.quantity}</span>
+                  </div>
+
+                  {(['completed', 'delivered'].includes(normalizeOrderState(order.rawStatus, order.paymentStatus))) && deliveryRecord ? (
+                    <div className="delivery-secrets" style={{ marginTop: '16px', paddingTop: '16px', borderTop: '1px solid #333' }}>
+                      <h6 style={{ color: '#10b981', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <CheckCircle size={16} /> Digital Delivery Complete
+                      </h6>
+
+                      {deliveryRecord.delivery_type === 'game_login_details' ? (
+                        <>
+                          {deliveryRecord.login_email && (
+                            <div style={{ marginBottom: '8px' }}>
+                              <p className="muted-sm" style={{ marginBottom: '4px' }}>Login Email / Username:</p>
+                              <code style={{ background: '#000', padding: '6px 10px', borderRadius: '4px', fontSize: '0.9rem', color: '#fff', display: 'block' }}>
+                                {deliveryRecord.login_email}
+                              </code>
+                            </div>
+                          )}
+                          <MaskedSecret
+                            label="Login Password"
+                            value={deliveryRecord.login_password}
+                            maskFormat="password"
+                            requireConfirm={true}
+                          />
+                        </>
+                      ) : (
+                        <MaskedSecret
+                          label={deliveryRecord.delivery_type === 'gift_card_code' ? "Gift Card Code" : "Game Redeem Code"}
+                          value={deliveryRecord.redeem_code}
+                          maskFormat="redeem"
+                          requireConfirm={true}
+                        />
+                      )}
+
+                      {deliveryRecord.instructions && (
+                        <div style={{ marginTop: '12px', padding: '12px', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.2)', borderRadius: '6px' }}>
+                          <h6 style={{ color: '#3b82f6', marginBottom: '4px', fontSize: '0.85rem' }}>Instructions:</h6>
+                          <p style={{ margin: 0, fontSize: '0.9rem', color: '#e5e7eb', whiteSpace: 'pre-wrap' }}>
+                            {deliveryRecord.instructions}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (['completed', 'delivered'].includes(normalizeOrderState(order.rawStatus, order.paymentStatus))) && loading ? (
+                    <p className="muted-sm">Loading delivery details...</p>
+                  ) : (['completed', 'delivered'].includes(normalizeOrderState(order.rawStatus, order.paymentStatus))) ? (
+                    <p className="muted-sm text-yellow">Delivery data unavailable. Contact support.</p>
+                  ) : (
+                    <p className="muted-sm">Delivery details will appear here once the order is completed.</p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

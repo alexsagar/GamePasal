@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import SEO from '../../components/SEO';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { Filter, Search, Grid, List } from 'lucide-react';
+import { Search } from 'lucide-react';
 import ProductCard from '../../components/ProductCard/ProductCard';
 import api from '../../services/api'; // Make sure you import your API utility
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -12,41 +12,48 @@ import './Products.css';
 
 const Products = () => {
   const { category } = useParams(); // e.g., 'pc', 'playstation', etc.
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [viewMode, setViewMode] = useState('grid');
-  const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({
-    platform: '',
-    priceRange: '',
-    genre: '',
-    rating: '',
-    sortBy: 'newest'
-  });
 
   const GIFT_CARD_PLATFORMS = [
-  { key: 'Steam', label: 'Steam Gift Cards' },
-  { key: 'PlayStation', label: 'PlayStation Gift Cards' },
-  { key: 'Xbox', label: 'Xbox Gift Cards' },
-  { key: 'iTunes', label: 'iTunes Gift Cards' },
-];
+    { key: 'Steam', label: 'Steam Gift Cards' },
+    { key: 'PlayStation', label: 'PlayStation Gift Cards' },
+    { key: 'Xbox', label: 'Xbox Gift Cards' },
+    { key: 'iTunes', label: 'iTunes Gift Cards' },
+  ];
 
-
-  // Keep sidebar filter state in sync with URL category for platform pages
-  useEffect(() => {
-    if (
-      category &&
-      ['pc', 'playstation', 'xbox', 'steam', 'gift-cards'].includes(category)
-    ) {
-      // Don't allow sidebar platform filter on platform-specific pages
-      setFilters((prev) => ({ ...prev, platform: '' }));
-    }
-  }, [category]);
 
   const searchQuery = searchParams.get('search') || '';
-  const sortBy = searchParams.get('sort') || 'newest';
+  const platformFilter = searchParams.get('platform') || '';
+  const genreFilter = searchParams.get('genre') || '';
+  const priceRange = searchParams.get('priceRange') || '';
+  const ratingFilter = searchParams.get('rating') || '';
+  const featuredFilter = searchParams.get('featured') || '';
+  const trendingFilter = searchParams.get('isTrending') || '';
+  const topSellerFilter = searchParams.get('isTopSeller') || '';
+  const bestSellingFilter = searchParams.get('isBestSelling') || '';
+  const preOrderFilter = searchParams.get('isPreOrder') || '';
+  const queryCategory = searchParams.get('category') || '';
+
+  const updateParams = (updates = {}, options = {}) => {
+    const next = new URLSearchParams(searchParams);
+
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === undefined || value === null || value === '') {
+        next.delete(key);
+      } else {
+        next.set(key, value);
+      }
+    });
+
+    if (options.resetPage) {
+      next.delete('page');
+    }
+
+    setSearchParams(next, { replace: true });
+  };
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -55,38 +62,54 @@ const Products = () => {
       try {
         const params = new URLSearchParams();
 
-        // Category/Platform from URL
-        if (category && category !== 'all') {
-          if (category === 'gift-cards') {
+        const normalizedCategory = category || queryCategory;
+
+        if (normalizedCategory && normalizedCategory !== 'all') {
+          if (normalizedCategory === 'gift-cards') {
             params.append('category', 'GiftCard');
-          } else if (category === 'software') {
+          } else if (normalizedCategory === 'software') {
             params.append('category', 'Software');
+          } else if (normalizedCategory === 'preorder') {
+            params.append('isPreOrder', 'true');
           } else {
-            // It's a platform like 'pc', 'playstation', etc.
-            params.append('platform', category.charAt(0).toUpperCase() + category.slice(1));
+            const platformMap = {
+              pc: 'PC',
+              playstation: 'PlayStation',
+              xbox: 'Xbox',
+              nintendo: 'Nintendo',
+              steam: 'Steam',
+              mobile: 'Mobile',
+              itunes: 'iTunes'
+            };
+
+            if (platformMap[normalizedCategory.toLowerCase()]) {
+              params.append('platform', platformMap[normalizedCategory.toLowerCase()]);
+              params.append('category', 'Game');
+            } else if (['Game', 'GiftCard', 'Software'].includes(normalizedCategory)) {
+              params.append('category', normalizedCategory);
+            }
           }
         }
 
-        // Search
         if (searchQuery) {
           params.append('search', searchQuery);
         }
 
-        // Other filters
-        if (filters.platform) {
-          params.append('platform', filters.platform);
+        if (platformFilter && !category) {
+          params.append('platform', platformFilter);
         }
-
-        if (filters.genre) params.append('genre', filters.genre);
-        if (filters.priceRange) {
-          const [min, max] = filters.priceRange.split('-').map(Number);
-          params.append('minPrice', min);
-          params.append('maxPrice', max);
+        if (genreFilter) params.append('genre', genreFilter);
+        if (priceRange) {
+          const [min, max] = priceRange.split('-').map(Number);
+          if (Number.isFinite(min)) params.append('minPrice', min);
+          if (Number.isFinite(max)) params.append('maxPrice', max);
         }
-        if (filters.rating) params.append('rating', filters.rating);
-        if (filters.sortBy) {
-          params.append('sort', filters.sortBy);
-        }
+        if (ratingFilter) params.append('rating', ratingFilter);
+        if (featuredFilter) params.append('featured', featuredFilter);
+        if (trendingFilter) params.append('isTrending', trendingFilter);
+        if (topSellerFilter) params.append('isTopSeller', topSellerFilter);
+        if (bestSellingFilter) params.append('isBestSelling', bestSellingFilter);
+        if (preOrderFilter) params.append('isPreOrder', preOrderFilter);
 
         const response = await api.get(`/products?${params}`);
         setProducts(response.data.data);
@@ -99,20 +122,18 @@ const Products = () => {
     };
 
     fetchProducts();
-  }, [category, searchQuery, filters]);
+  }, [category, queryCategory, searchQuery, platformFilter, genreFilter, priceRange, ratingFilter, featuredFilter, trendingFilter, topSellerFilter, bestSellingFilter, preOrderFilter, searchParams]);
 
   // Handle platform change: navigate to correct route and reset filters
   const handlePlatformChange = (value) => {
     if (value) {
       navigate(`/products/${value.toLowerCase()}`);
-      // Optionally reset filters except sort (to mimic most stores)
-      setFilters({
+      updateParams({
         platform: '',
         priceRange: '',
         genre: '',
-        rating: '',
-        sortBy: filters.sortBy
-      });
+        rating: ''
+      }, { resetPage: true });
     }
   };
 
@@ -122,25 +143,27 @@ const Products = () => {
       handlePlatformChange(value);
       return;
     }
-    setFilters((prev) => ({
-      ...prev,
-      [filterType]: value
-    }));
+    updateParams({ [filterType]: value }, { resetPage: true });
   };
 
   const clearFilters = () => {
-    setFilters({
+    updateParams({
       platform: '',
       priceRange: '',
       genre: '',
       rating: '',
-      sortBy: 'newest'
-    });
+      featured: '',
+      isTrending: '',
+      isTopSeller: '',
+      isBestSelling: '',
+      isPreOrder: ''
+    }, { resetPage: true });
   };
 
   const getCategoryTitle = () => {
     if (searchQuery) return `Search Results for "${searchQuery}"`;
-    if (!category || category === 'all') return 'All Products';
+    const normalizedCategory = category || queryCategory;
+    if (!normalizedCategory || normalizedCategory === 'all') return featuredFilter ? 'Featured Products' : 'All Products';
 
     const categoryTitles = {
       'pc': 'PC Games',
@@ -151,7 +174,12 @@ const Products = () => {
       'software': 'Software'
     };
 
-    return categoryTitles[category] || category.charAt(0).toUpperCase() + category.slice(1);
+    if (trendingFilter === 'true') return 'Trending Products';
+    if (bestSellingFilter === 'true') return 'Best Selling Products';
+    if (topSellerFilter === 'true') return 'Top Sellers';
+    if (preOrderFilter === 'true') return 'Pre-Order Products';
+
+    return categoryTitles[normalizedCategory] || normalizedCategory.charAt(0).toUpperCase() + normalizedCategory.slice(1);
   };
 
   if (loading) {
@@ -171,19 +199,14 @@ const Products = () => {
               <h1 className="products-title">{getCategoryTitle()}</h1>
               <p className="products-count">Loading products...</p>
             </div>
-            <div className="products-controls">
-              <div className="view-controls">
-                <button className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}><Grid size={20} /></button>
-                <button className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}><List size={20} /></button>
-              </div>
-            </div>
+            <div className="products-controls" />
           </div>
           <div className="products-content">
-            <div className={`filters-sidebar ${showFilters ? 'show' : ''}`}>
+            <div className="filters-sidebar">
               {/* You can also create a skeleton for filters */}
             </div>
             <div className="products-main">
-              <div className={`products-grid ${viewMode}`}>
+              <div className="products-grid grid">
                 {Array.from({ length: 12 }).map((_, index) => (
                   <ProductCardSkeleton key={index} />
                 ))}
@@ -199,7 +222,7 @@ const Products = () => {
     <div className="products-page">
       <SEO
         title={`Buy Game Gift Cards in Nepal | ${category ? `${category} ` : ''}Gift Cards | GamePasal`}
-        description={`Browse ${category || 'PlayStation, Xbox, PC, Nintendo'} gift cards in Nepal. Instant delivery via email and account. Pay with eSewa, Khalti, or bank transfer.`}
+        description={`Browse ${category || 'PlayStation, Xbox, PC, Nintendo'} gift cards in Nepal. Instant delivery via email and account. Pay with Fonepay QR or bank transfer.`}
         keywords={`game gift cards Nepal, ${category || 'playstation,xbox,pc'} gift cards Nepal, buy digital codes Nepal`}
         canonical={`https://www.gamepasal.com/products${category ? `/${category}` : ''}`}
       />
@@ -210,36 +233,11 @@ const Products = () => {
             <h1 className="products-title">{getCategoryTitle()}</h1>
             <p className="products-count">{products.length} products found</p>
           </div>
-
-          <div className="products-controls">
-            {/* <button
-              className="filter-toggle"
-              onClick={() => setShowFilters(!showFilters)}
-            >
-              <Filter size={20} />
-              Filters
-            </button> */}
-
-            <div className="view-controls">
-              <button
-                className={`view-btn ${viewMode === 'grid' ? 'active' : ''}`}
-                onClick={() => setViewMode('grid')}
-              >
-                <Grid size={20} />
-              </button>
-              <button
-                className={`view-btn ${viewMode === 'list' ? 'active' : ''}`}
-                onClick={() => setViewMode('list')}
-              >
-                <List size={20} />
-              </button>
-            </div>
-          </div>
         </div>
 
         <div className="products-content">
           {/* Filters Sidebar */}
-          <div className={`filters-sidebar ${showFilters ? 'show' : ''}`}>
+          <div className="filters-sidebar">
             <div className="filters-header">
               <h3>Filters</h3>
               <button onClick={clearFilters} className="clear-filters">
@@ -252,7 +250,7 @@ const Products = () => {
               <div className="filter-group">
                 <h4>Platform</h4>
                 <select
-                  value={filters.platform}
+                  value={platformFilter}
                   onChange={(e) => handleFilterChange('platform', e.target.value)}
                   className="filter-select"
                 >
@@ -269,7 +267,7 @@ const Products = () => {
             <div className="filter-group">
               <h4>Genre</h4>
               <select
-                value={filters.genre}
+                value={genreFilter}
                 onChange={(e) => handleFilterChange('genre', e.target.value)}
                 className="filter-select"
               >
@@ -286,22 +284,22 @@ const Products = () => {
             <div className="filter-group">
               <h4>Price Range</h4>
               <select
-                value={filters.priceRange}
+                value={priceRange}
                 onChange={(e) => handleFilterChange('priceRange', e.target.value)}
                 className="filter-select"
               >
                 <option value="">Any Price</option>
-                <option value="0-20">100 - 200</option>
-                <option value="20-40">200 - 500</option>
-                <option value="40-60">500 - 3000</option>
-                <option value="60-100">3000+</option>
+                <option value="0-200">NRS 0 - 200</option>
+                <option value="201-500">NRS 201 - 500</option>
+                <option value="501-3000">NRS 501 - 3000</option>
+                <option value="3001-999999">NRS 3001+</option>
               </select>
             </div>
 
             <div className="filter-group">
               <h4>Rating</h4>
               <select
-                value={filters.rating}
+                value={ratingFilter}
                 onChange={(e) => handleFilterChange('rating', e.target.value)}
                 className="filter-select"
               >
@@ -313,106 +311,93 @@ const Products = () => {
               </select>
             </div>
 
-            <div className="filter-group">
-              <h4>Sort By</h4>
-              <select
-                value={filters.sortBy}
-                onChange={(e) => handleFilterChange('sortBy', e.target.value)}
-                className="filter-select"
-              >
-                <option value="newest">Newest</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="rating">Highest Rated</option>
-                <option value="name">Name A-Z</option>
-              </select>
-            </div>
+
           </div>
 
           {/* Products Grid */}
           <div className="products-main">
-  {category === 'gift-cards' ? (
-    <div className="giftcard-sections">
-      {GIFT_CARD_PLATFORMS.map(({ key, label }) => {
-        const platformProducts = products.filter(
-          (product) =>
-            product.platform &&
-            product.platform.toLowerCase() === key.toLowerCase()
-        );
-        return (
-          <div key={key} className="giftcard-row-section">
-            <h2 className="giftcard-row-header">{label}</h2>
-            {platformProducts.length === 0 ? (
-              <p style={{ color: "#aaa", margin: "20px 0 40px" }}>No {label} found.</p>
-            ) : platformProducts.length <= 4 ? (
-              <div className="giftcard-row-list">
-                {platformProducts.map((product) => (
-                  <ProductCard key={product._id} product={product} variant="simple" context="page" />
-                ))}
+            {category === 'gift-cards' ? (
+              <div className="giftcard-sections">
+                {GIFT_CARD_PLATFORMS.map(({ key, label }) => {
+                  const platformProducts = products.filter(
+                    (product) =>
+                      product.platform &&
+                      product.platform.toLowerCase() === key.toLowerCase()
+                  );
+                  return (
+                    <div key={key} className="giftcard-row-section">
+                      <h2 className="giftcard-row-header">{label}</h2>
+                      {platformProducts.length === 0 ? (
+                        <p style={{ color: "#aaa", margin: "20px 0 40px" }}>No {label} found.</p>
+                      ) : platformProducts.length <= 4 ? (
+                        <div className="giftcard-row-list">
+                          {platformProducts.map((product) => (
+                            <ProductCard key={product._id} product={product} variant="simple" context="page" />
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="giftcard-carousel-container">
+                          <Swiper
+                            modules={[Navigation, Autoplay]}
+                            spaceBetween={16}
+                            slidesPerView={4}
+                            navigation={true}
+                            autoplay={{
+                              delay: 3000,
+                              disableOnInteraction: false,
+                            }}
+                            loop={platformProducts.length > 4}
+                            breakpoints={{
+                              320: {
+                                slidesPerView: 1,
+                                spaceBetween: 16,
+                              },
+                              640: {
+                                slidesPerView: 2,
+                                spaceBetween: 16,
+                              },
+                              768: {
+                                slidesPerView: 3,
+                                spaceBetween: 16,
+                              },
+                              1024: {
+                                slidesPerView: 4,
+                                spaceBetween: 16,
+                              },
+                            }}
+                            className="giftcard-swiper"
+                          >
+                            {platformProducts.map((product) => (
+                              <SwiperSlide key={product._id}>
+                                <ProductCard product={product} variant="simple" context="page" />
+                              </SwiperSlide>
+                            ))}
+                          </Swiper>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             ) : (
-              <div className="giftcard-carousel-container">
-                <Swiper
-                  modules={[Navigation, Autoplay]}
-                  spaceBetween={16}
-                  slidesPerView={4}
-                  navigation={true}
-                  autoplay={{
-                    delay: 3000,
-                    disableOnInteraction: false,
-                  }}
-                  loop={platformProducts.length > 4}
-                  breakpoints={{
-                    320: {
-                      slidesPerView: 1,
-                      spaceBetween: 16,
-                    },
-                    640: {
-                      slidesPerView: 2,
-                      spaceBetween: 16,
-                    },
-                    768: {
-                      slidesPerView: 3,
-                      spaceBetween: 16,
-                    },
-                    1024: {
-                      slidesPerView: 4,
-                      spaceBetween: 16,
-                    },
-                  }}
-                  className="giftcard-swiper"
-                >
-                  {platformProducts.map((product) => (
-                    <SwiperSlide key={product._id}>
-                      <ProductCard product={product} variant="simple" context="page" />
-                    </SwiperSlide>
+              products.length === 0 ? (
+                <div className="no-products">
+                  <Search size={48} />
+                  <h3>No products found</h3>
+                  <p>Try adjusting your filters or search terms</p>
+                  <button onClick={clearFilters} className="btn btn-primary">
+                    Clear Filters
+                  </button>
+                </div>
+              ) : (
+                <div className="products-grid grid">
+                  {products.map((product) => (
+                    <ProductCard key={product._id} product={product} variant="simple" context="page" />
                   ))}
-                </Swiper>
-              </div>
+                </div>
+              )
             )}
           </div>
-        );
-      })}
-    </div>
-  ) : (
-    products.length === 0 ? (
-      <div className="no-products">
-        <Search size={48} />
-        <h3>No products found</h3>
-        <p>Try adjusting your filters or search terms</p>
-        <button onClick={clearFilters} className="btn btn-primary">
-          Clear Filters
-        </button>
-      </div>
-    ) : (
-      <div className={`products-grid ${viewMode}`}>
-        {products.map((product) => (
-          <ProductCard key={product._id} product={product} variant="simple" context="page" />
-        ))}
-      </div>
-    )
-  )}
-</div>
 
         </div>
       </div>

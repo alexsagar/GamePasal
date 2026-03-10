@@ -1,3 +1,4 @@
+
 const express = require('express');
 const path = require('path');
 const mongoose = require('mongoose');
@@ -15,8 +16,6 @@ const userRoutes = require('./routes/userRoutes');
 const productRoutes = require('./routes/productRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const contentRoutes = require('./routes/contentRoutes');
-const walletRoutes = require('./routes/walletRoutes');
-const { walletStreamHandler } = require('./utils/walletEvents');
 const checkoutRoutes = require('./routes/checkoutRoutes');
 const webhookRoutes = require('./routes/webhookRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
@@ -128,12 +127,10 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/wallet', walletRoutes);
 app.use('/api/checkout', checkoutRoutes);
+app.use('/api/cart', require('./routes/cartRoutes'));
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/payments', paymentRoutes);
-// SSE stream for wallet updates
-app.get('/api/wallet/stream', walletStreamHandler);
 // robots.txt
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain').send(`User-agent: *
@@ -153,8 +150,8 @@ app.get('/sitemap.xml', async (req, res) => {
       '/',
       '/products',
       '/products/gift-cards',
-      '/about','/careers','/blog','/partners','/affiliate',
-      '/help','/faq','/contact','/terms','/privacy'
+      '/about', '/careers', '/blog', '/partners', '/affiliate',
+      '/help', '/faq', '/contact', '/terms', '/privacy'
     ];
     let urls = staticUrls.map(u => `${base}${u}`);
     // Optionally fetch products/categories here using your models
@@ -201,7 +198,7 @@ app.use('*', (req, res) => {
 // Global error handler
 app.use((err, req, res, next) => {
   console.error(`[${req.id}] Error:`, err.stack);
-  
+
   res.status(err.status || 500).json({
     success: false,
     message: err.message || 'Internal Server Error',
@@ -223,6 +220,6 @@ const serverInstance = app.listen(PORT, () => {
 try {
   serverInstance.keepAliveTimeout = 70000; // 70s
   serverInstance.headersTimeout = 75000; // 75s
-} catch (_) {}
+} catch (_) { }
 
 module.exports = app;

@@ -1,7 +1,15 @@
 const { validationResult } = require('express-validator');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
-const { sendOrderConfirmation } = require('../utils/sendOTP');
+const { sendOrderProcessingEmail, sendOrderDeliveryEmail, sendOrderEmail } = require('../services/mailer');
+const Delivery = require('../models/Delivery');
+const {
+  applyOrderTransition,
+  normalizeOrderStatus,
+  getStatusFilterValues,
+  getNormalizedPaymentStatus,
+  isPaidLikeStatus
+} = require('../utils/orderStateMachine');
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -25,7 +33,7 @@ const createOrder = async (req, res) => {
 
     for (const item of products) {
       const product = await Product.findById(item.productId);
-      
+
       if (!product || !product.isActive) {
         return res.status(404).json({
           success: false,
@@ -52,9 +60,6 @@ const createOrder = async (req, res) => {
         image: product.image
       });
 
-      // Update product stock
-      product.stock -= item.quantity;
-      await product.save();
     }
 
     // Generate order number with timestamp to avoid race conditions
@@ -64,13 +69,20 @@ const createOrder = async (req, res) => {
 
     // Create order
     const orderData = {
-      userId: req.user.id,
+      userId: req.user?.id, // Optional for guest checkout
       orderNumber,
       products: orderProducts,
       totalAmount: calculatedTotal,
       paymentMethod: paymentMethod || 'Pending',
       shippingAddress,
-      promoCode
+      promoCode,
+      guestEmail: req.body.guestEmail,
+      status: 'order_placed',
+      statusHistory: [{
+        status: 'order_placed',
+        updatedBy: req.user?.id,
+        note: 'Order created'
+      }]
     };
 
     const order = await Order.create(orderData);
@@ -78,14 +90,8 @@ const createOrder = async (req, res) => {
     // Populate order with user details
     await order.populate('userId', 'username email phone');
 
-    // Send order confirmation email
-    try {
-      await sendOrderConfirmation(req.user.email, {
-        orderNumber: order.orderNumber,
-        totalAmount: order.totalAmount,
-        paymentStatus: order.paymentStatus
-      });
-    } catch (emailError) {
+    // Send order confirmation email (branded)
+    try { await sendOrderEmail(order); } catch (emailError) {
       console.error('Failed to send order confirmation email:', emailError);
     }
 
@@ -101,6 +107,120 @@ const createOrder = async (req, res) => {
       success: false,
       message: 'Server error while creating order'
     });
+  }
+};
+
+// @desc    Send manual delivery email and optionally mark delivered
+// @route   POST /api/orders/:id/deliver
+// @access  Private/Admin
+const deliverOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { items = [], adminNotes } = req.body;
+    const order = await Order.findById(id).populate('userId', 'email');
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    const normalizedStatus = normalizeOrderStatus(order.status);
+    if (!isPaidLikeStatus(normalizedStatus)) {
+      return res.status(400).json({ success: false, message: 'Order must be payment verified before delivery' });
+    }
+
+    if (!Array.isArray(items) || items.length !== order.products.length) {
+      return res.status(400).json({ success: false, message: 'Delivery details are required for every ordered product' });
+    }
+
+    for (const productLine of order.products) {
+      const payload = items.find((item) => String(item.productId) === String(productLine.productId));
+      if (!payload) {
+        return res.status(400).json({ success: false, message: `Missing delivery data for ${productLine.title}` });
+      }
+
+      if (!payload.delivery_type) {
+        return res.status(400).json({ success: false, message: `Delivery type is required for ${productLine.title}` });
+      }
+
+      if (payload.delivery_type === 'game_login_details') {
+        if (!payload.login_email || !payload.login_password) {
+          return res.status(400).json({ success: false, message: `Login email and password are required for ${productLine.title}` });
+        }
+      } else if (!payload.redeem_code) {
+        return res.status(400).json({ success: false, message: `Redeem code is required for ${productLine.title}` });
+      }
+    }
+
+    for (const item of items) {
+      await Delivery.findOneAndUpdate(
+        { orderId: order._id, productId: item.productId },
+        {
+          orderId: order._id,
+          productId: item.productId,
+          delivery_type: item.delivery_type,
+          redeem_code: item.redeem_code,
+          login_email: item.login_email,
+          login_password: item.login_password,
+          instructions: item.instructions,
+          sent_by_admin: req.user.id,
+          sent_at: new Date()
+        },
+        { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true }
+      );
+    }
+
+    const deliveryCount = await Delivery.countDocuments({ orderId: order._id });
+
+    // Send email combining items into a string format the mailer understands
+    await sendOrderDeliveryEmail(order.userId, order, { items });
+
+    if (normalizedStatus === 'payment_verified') {
+      applyOrderTransition(order, 'processing', {
+        updatedBy: req.user.id,
+        note: adminNotes || 'Admin started manual fulfillment'
+      });
+    }
+
+    applyOrderTransition(order, 'delivered', {
+      updatedBy: req.user.id,
+      note: adminNotes || 'Order officially marked as delivered',
+      deliveryRecordsCount: deliveryCount
+    });
+    await order.save();
+
+    res.json({ success: true, message: 'Order delivered successfully' });
+  } catch (e) {
+    console.error('deliverOrder error:', e);
+    res.status(500).json({ success: false, message: 'Failed to deliver order' });
+  }
+};
+
+// @desc    Get secure decrypted delivery details for a specific order
+// @route   GET /api/orders/:id/delivery
+// @access  Private
+const getOrderDeliveryDetails = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+    // Ensure authorized user (owner or admin)
+    if (String(order.userId) !== String(req.user.id) && req.user.role !== 'admin') {
+      return res.status(403).json({ success: false, message: 'Access denied' });
+    }
+
+    // Make sure delivery is actually complete before revealing
+    if (!['delivered', 'completed'].includes(normalizeOrderStatus(order.status))) {
+      return res.status(400).json({ success: false, message: 'Order is not yet delivered' });
+    }
+
+    const deliveries = await Delivery.find({ orderId: order._id })
+      .select('productId delivery_type redeem_code login_email login_password instructions sent_at');
+
+    // Mongoose will automatically decrypt the getters since we set toJSON: { getters: true } in the schema
+    res.json({ success: true, data: deliveries });
+
+  } catch (error) {
+    console.error('getDeliveryDetails error:', error);
+    res.status(500).json({ success: false, message: 'Server error fetching delivery details' });
   }
 };
 
@@ -198,7 +318,7 @@ const getAllOrders = async (req, res) => {
 
     // Build filter
     const filter = {};
-    if (status) filter.status = status;
+    if (status) filter.status = { $in: getStatusFilterValues(status) };
     if (paymentStatus) filter.paymentStatus = paymentStatus;
     if (paymentMethod) filter.paymentMethod = paymentMethod;
 
@@ -266,24 +386,45 @@ const updateOrderStatus = async (req, res) => {
       });
     }
 
-    // Update fields if provided
+    const normalizedCurrentStatus = normalizeOrderStatus(order.status);
+
     if (status) {
-      order.status = status;
-      order.statusHistory.push({
-        status,
+      const deliveryRecordsCount = ['delivered', 'completed'].includes(normalizeOrderStatus(status))
+        ? await Delivery.countDocuments({ orderId: order._id })
+        : 0;
+
+      applyOrderTransition(order, status, {
         updatedBy: req.user.id,
-        note: adminNotes || `Status updated to ${status}`
+        note: adminNotes || `Status updated to ${normalizeOrderStatus(status)}`,
+        deliveryRecordsCount
       });
+
+      if (normalizeOrderStatus(status) === 'processing' && normalizedCurrentStatus !== 'processing') {
+        try { await sendOrderProcessingEmail(order.userId, order); } catch (_) { }
+      }
     }
 
     if (paymentStatus) {
       order.paymentStatus = paymentStatus;
-      if (paymentStatus === 'paid' && paymentDetails) {
+      if (['paid', 'verified'].includes(paymentStatus) && paymentDetails) {
         order.paymentDetails = {
           ...order.paymentDetails,
           ...paymentDetails,
           paymentDate: new Date()
         };
+      }
+
+      if (paymentStatus === 'verified' && ['order_placed', 'payment_pending'].includes(normalizeOrderStatus(order.status))) {
+        applyOrderTransition(order, 'payment_verified', {
+          updatedBy: req.user.id,
+          note: adminNotes || 'Payment manually verified by admin'
+        });
+      }
+      if (paymentStatus === 'rejected' && ['order_placed', 'payment_pending', 'processing'].includes(normalizeOrderStatus(order.status))) {
+        applyOrderTransition(order, 'failed', {
+          updatedBy: req.user.id,
+          note: adminNotes || 'Payment rejected by admin'
+        });
       }
     }
 
@@ -340,26 +481,14 @@ const cancelOrder = async (req, res) => {
     }
 
     // Check if order can be cancelled
-    if (order.status === 'delivered' || order.status === 'cancelled') {
+    if (!['order_placed', 'payment_pending'].includes(normalizeOrderStatus(order.status))) {
       return res.status(400).json({
         success: false,
-        message: 'Order cannot be cancelled'
+        message: 'Only unpaid orders can be cancelled'
       });
     }
 
-    // Restore product stock
-    for (const item of order.products) {
-      const product = await Product.findById(item.productId);
-      if (product) {
-        product.stock += item.quantity;
-        await product.save();
-      }
-    }
-
-    // Update order status
-    order.status = 'cancelled';
-    order.statusHistory.push({
-      status: 'cancelled',
+    applyOrderTransition(order, 'cancelled', {
       updatedBy: req.user.id,
       note: 'Order cancelled by user'
     });
@@ -409,22 +538,11 @@ const deleteOrder = async (req, res) => {
     }
 
     // Check if order can be deleted (only pending, cancelled, or failed payment orders)
-    if (order.status === 'delivered' || order.status === 'confirmed') {
+    if (['delivered', 'completed'].includes(normalizeOrderStatus(order.status))) {
       return res.status(400).json({
         success: false,
         message: 'Cannot delete completed orders'
       });
-    }
-
-    // Restore product stock if order was processing
-    if (order.status === 'processing' || order.status === 'pending') {
-      for (const item of order.products) {
-        const product = await Product.findById(item.productId);
-        if (product) {
-          product.stock += item.quantity;
-          await product.save();
-        }
-      }
     }
 
     // Delete the order permanently
@@ -455,46 +573,21 @@ const deleteOrder = async (req, res) => {
 // @access  Private/Admin
 const refundOrder = async (req, res) => {
   const mongoose = require('mongoose');
-  const User = require('../models/User');
-  const WalletTransaction = require('../models/WalletTransaction');
-  const { notifyWalletUpdate } = require('../utils/walletEvents');
   const session = await mongoose.startSession();
   try {
     const { id } = req.params;
-    let balanceAfter;
     await session.withTransaction(async () => {
       const order = await Order.findById(id).session(session);
       if (!order) throw new Error('Order not found');
-      if (order.paymentStatusV2 !== 'PAID') throw new Error('Order is not paid');
+      if (getNormalizedPaymentStatus(order) !== 'verified') throw new Error('Order is not paid');
 
-      // Refund wallet portion if used
-      if (order.walletUsedPaisa && order.walletUsedPaisa > 0) {
-        const user = await User.findById(order.userId).session(session);
-        const newBalance = (user.walletBalance || 0) + order.walletUsedPaisa;
-        await WalletTransaction.create([{
-          user: order.userId,
-          type: 'REFUND',
-          method: 'CHECKOUT',
-          provider: 'CHECKOUT',
-          amount: order.walletUsedPaisa,
-          status: 'SUCCESS',
-          orderId: order._id,
-          referenceNote: 'Refund wallet portion',
-          balanceAfter: newBalance
-        }], { session });
-        user.walletBalance = newBalance;
-        await user.save({ session });
-        balanceAfter = newBalance;
-      }
-
-      // TODO: trigger gateway refund for gatewayUsedPaisa if > 0
-      order.paymentStatusV2 = 'REFUNDED';
+      // TODO: trigger gateway refund
+      applyOrderTransition(order, 'refunded', {
+        updatedBy: req.user.id,
+        note: 'Order refunded by admin'
+      });
       await order.save({ session });
     });
-    if (typeof balanceAfter === 'number') {
-      const order = await Order.findById(req.params.id).lean();
-      notifyWalletUpdate(order.userId, balanceAfter);
-    }
     res.json({ success: true });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message || 'Refund failed' });
@@ -511,5 +604,7 @@ module.exports = {
   updateOrderStatus,
   cancelOrder,
   deleteOrder,
-  refundOrder
+  refundOrder,
+  deliverOrder,
+  getOrderDeliveryDetails
 };

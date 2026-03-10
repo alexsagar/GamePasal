@@ -1,43 +1,60 @@
 # Benefits Component
 
-Path: `frontend/src/components/Benefits/Benefits.jsx`
+`Benefits` renders a configurable grid of trust and service highlights for marketing sections.
 
-- Displays 4–6 benefit cards in a responsive grid (1 / 2 / 3 per row).
-- Matches dark theme with red accents, hover lift, and accessible icon labels.
+## File Paths
 
-## Config
-Defined in `frontend/src/components/Benefits/benefits.config.js`:
-```js
-export const defaultBenefits = [
-  { id: 'instant-delivery', icon: 'Zap', title: 'Instant Delivery', description: 'Game keys and software licenses sent within seconds.' },
-  // ...
-];
-```
-- `icon` is the `lucide-react` icon name.
+- `frontend/src/components/Benefits/Benefits.jsx`
+- `frontend/src/components/Benefits/benefits.config.js`
+
+## Default Behavior
+
+- Renders a section title and optional subtitle
+- Displays benefit cards in a responsive grid
+- Resolves icons dynamically from `lucide-react`
+- Optionally renders a CTA link below the grid
 
 ## Props
+
 ```ts
-interface Benefit { id: string; icon: string; title: string; description: string }
-interface BenefitsProps {
+type Benefit = {
+  id: string;
+  icon: string;
+  title: string;
+  description: string;
+};
+
+type BenefitsProps = {
   title?: string;
   subtitle?: string;
-  items?: Benefit[];   // defaults to defaultBenefits
+  items?: Benefit[];
   ctaLabel?: string;
   ctaHref?: string;
   className?: string;
-}
+};
 ```
 
+## Default Content Source
+
+The default benefit list is exported from `benefits.config.js`.
+
 ## Usage
+
 ```jsx
-import Benefits from '@/components/Benefits/Benefits';
-import { defaultBenefits } from '@/components/Benefits/benefits.config';
+import Benefits from './Benefits';
+import { defaultBenefits } from './benefits.config';
 
 <Benefits
-  title="Why Choose Us"
-  subtitle="We deliver more than just games and software — we deliver value you can trust."
+  title="Why Choose GamePasal"
+  subtitle="Fast delivery, reliable products, and clear support."
   items={defaultBenefits}
-  ctaLabel="Shop Now"
+  ctaLabel="Browse Products"
   ctaHref="/products"
 />
-``` 
+```
+
+## Notes
+
+- If an invalid icon name is provided, the component falls back to `Zap`.
+- The component is presentation-oriented and has no API dependency.
+

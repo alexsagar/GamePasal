@@ -1,0 +1,264 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Wallet, Upload, AlertCircle } from 'lucide-react';
+import QRPayInstructions from '../../components/QRPayInstructions/QRPayInstructions';
+import paymentAPI from '../../services/paymentAPI';
+import { uploadToCloudinary } from '../../utils/uploadToCloudinary';
+import './WalletTopUp.css';
+
+const WalletTopUp = () => {
+  const navigate = useNavigate();
+  const [step, setStep] = useState('amount'); // 'amount', 'qr', 'receipt', 'processing'
+  const [amount, setAmount] = useState('');
+  const [paymentData, setPaymentData] = useState({
+    payerName: '',
+    referenceLast4: '',
+    paidAtLocal: '',
+    proofUrl: ''
+  });
+  const [receiptFile, setReceiptFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const steps = [
+    { id: 'amount', label: 'Enter Amount' },
+    { id: 'qr', label: 'Scan QR' },
+    { id: 'receipt', label: 'Upload Receipt' },
+  ];
+
+  const MIN_AMOUNT = 100;
+  const MAX_AMOUNT = 50000;
+
+  const handleAmountSubmit = (e) => {
+    e.preventDefault();
+    const numAmount = parseFloat(amount);
+    
+    if (!amount || numAmount < MIN_AMOUNT || numAmount > MAX_AMOUNT) {
+      setError(`Amount must be between NPR ${MIN_AMOUNT} and NPR ${MAX_AMOUNT}`);
+      return;
+    }
+    
+    setError('');
+    setStep('qr');
+  };
+
+  const handleQRPaymentSubmit = () => {
+    setStep('receipt');
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please select an image file');
+        return;
+      }
+      
+      // Validate file size (5MB max)
+      if (file.size > 5 * 1024 * 1024) {
+        setError('File size must be less than 5MB');
+        return;
+      }
+      
+      setReceiptFile(file);
+      setError('');
+    }
+  };
+
+  const handleReceiptUpload = async () => {
+    if (!receiptFile) {
+      setError('Please select a receipt image');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      setError('');
+      
+      // Upload to Cloudinary
+      const uploadedUrl = await uploadToCloudinary(receiptFile);
+      
+      setPaymentData(prev => ({
+        ...prev,
+        proofUrl: uploadedUrl
+      }));
+      
+      setUploading(false);
+    } catch (error) {
+      console.error('Upload failed:', error);
+      setError('Failed to upload receipt. Please try again.');
+      setUploading(false);
+    }
+  };
+
+  const handleSubmitPayment = async (e) => {
+    e.preventDefault();
+    
+    if (!paymentData.proofUrl) {
+      setError('Please upload your receipt first');
+      return;
+    }
+
+    try {
+      setSubmitLoading(true);
+      setError('');
+
+      const response = await paymentAPI.submitWalletTopUp(amount, paymentData);
+      
+      // Navigate to success page
+      navigate('/wallet/success', { 
+        state: { 
+          amount: response.data.amount,
+          transactionId: response.data.transactionId
+        } 
+      });
+    } catch (error) {
+      console.error('Payment submission failed:', error);
+      setError(error.response?.data?.message || 'Failed to process payment');
+      setSubmitLoading(false);
+    }
+  };
+
+  return (
+    <div className="gp-wallet-container">
+      <div className="gp-wallet-wrapper">
+        {/* Header */}
+        <div className="gp-wallet-header">
+          <div className="gp-wallet-icon">
+            <Wallet size={24} />
+          </div>
+          <h1 className="gp-wallet-title">Top Up Wallet</h1>
+        </div>
+
+        {/* Steps */}
+        <div className="gp-wallet-steps">
+          {steps.map((s, index) => (
+            <div 
+              key={s.id} 
+              className={`gp-wallet-step ${step === s.id ? 'active' : ''}`}
+            >
+              <span className="gp-wallet-step-number">{index + 1}</span>
+              <span>{s.label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Content */}
+        <div className="gp-wallet-content">
+          {error && (
+            <div className="gp-wallet-error">
+              <AlertCircle size={20} />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {step === 'amount' && (
+            <form onSubmit={handleAmountSubmit} className="gp-wallet-amount-form">
+              <label htmlFor="amount" className="gp-wallet-amount-label">Enter Amount (NPR)</label>
+              <input
+                type="number"
+                id="amount"
+                className="gp-wallet-amount-input"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                min={MIN_AMOUNT}
+                max={MAX_AMOUNT}
+                placeholder={`NPR ${MIN_AMOUNT} - ${MAX_AMOUNT}`}
+                required
+              />
+              <p className="gp-wallet-amount-info">
+                Amount should be between NPR {MIN_AMOUNT} and NPR {MAX_AMOUNT}
+              </p>
+              <div className="gp-wallet-controls">
+                <button type="submit" className="gp-wallet-btn gp-wallet-btn-primary">
+                  Continue
+                </button>
+              </div>
+            </form>
+          )}
+
+          {step === 'qr' && (
+            <div className="gp-wallet-qr">
+              <QRPayInstructions
+                amount={amount}
+                onPaymentSubmit={handleQRPaymentSubmit}
+              />
+            </div>
+          )}
+
+          {step === 'receipt' && (
+            <div className="gp-wallet-receipt">
+              <label className="gp-wallet-receipt-label" htmlFor="receipt">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="gp-wallet-receipt-input"
+                  id="receipt"
+                />
+                <div className="gp-wallet-receipt-icon">
+                  <Upload size={32} />
+                </div>
+                <div className="gp-wallet-receipt-text">
+                  {receiptFile ? receiptFile.name : 'Click to select receipt image'}
+                </div>
+              </label>
+              
+              {receiptFile && !paymentData.proofUrl && (
+                <div className="gp-wallet-controls">
+                  <button 
+                    onClick={handleReceiptUpload} 
+                    disabled={uploading}
+                    className="gp-wallet-btn gp-wallet-btn-primary"
+                  >
+                    {uploading ? (
+                      <>
+                        <span className="gp-wallet-loading">
+                          <Upload size={20} />
+                        </span>
+                        <span>Uploading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload size={20} />
+                        <span>Upload Receipt</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {paymentData.proofUrl && (
+                <form onSubmit={handleSubmitPayment} className="gp-wallet-controls">
+                  <button 
+                    type="submit"
+                    disabled={submitLoading}
+                    className="gp-wallet-btn gp-wallet-btn-primary"
+                  >
+                    {submitLoading ? (
+                      <>
+                        <span className="gp-wallet-loading">
+                          <Wallet size={20} />
+                        </span>
+                        <span>Processing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Wallet size={20} />
+                        <span>Submit Payment</span>
+                      </>
+                    )}
+                  </button>
+                </form>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default WalletTopUp;

@@ -15,12 +15,11 @@ import {
   CheckCircle
 } from 'lucide-react';
 import api from '../../services/api';
+import ProductRecommendations from '../../components/ProductRecommendations/ProductRecommendations';
 import './ProductDetail.css';
 import 'swiper/css';
 import 'swiper/css/navigation';
 import 'swiper/css/pagination';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination } from 'swiper/modules';
 
 
 // --- Universal Image Helper ---
@@ -55,10 +54,7 @@ const ProductDetail = () => {
       setLoading(true);
       const response = await api.get(`/products/${id}`);
       setProduct(response.data.data);
-      // Fetch related products
-      if (response.data.data.platform) {
-        fetchRelatedProducts(response.data.data.platform, response.data.data._id);
-      }
+      fetchRelatedProducts(response.data.data._id);
     } catch (error) {
       console.error('Error fetching product:', error);
       setError('Product not found');
@@ -67,16 +63,15 @@ const ProductDetail = () => {
     }
   };
 
-  const fetchRelatedProducts = async (platform, currentProductId) => {
-  try {
-    const response = await api.get(`/products?platform=${platform}`); // No limit param
-    // Filter out only the current product
-    const filtered = response.data.data.filter(p => p._id !== currentProductId);
-    setRelatedProducts(filtered); // No .slice()
-  } catch (error) {
-    console.error('Error fetching related products:', error);
-  }
-};
+  const fetchRelatedProducts = async (currentProductId) => {
+    try {
+      const response = await api.get(`/products/${currentProductId}/recommendations?limit=8`);
+      setRelatedProducts(response.data.data || []);
+    } catch (error) {
+      console.error('Error fetching related products:', error);
+      setRelatedProducts([]);
+    }
+  };
 
 
   const handleAddToCart = () => {
@@ -122,6 +117,8 @@ const ProductDetail = () => {
   const discountPercentage = product.salePrice 
     ? Math.round(((product.price - product.salePrice) / product.price) * 100)
     : 0;
+  const parsedStock = Number(product?.stock);
+  const stockValue = Number.isFinite(parsedStock) ? parsedStock : 0;
 
   const images = product.images && product.images.length > 0 
     ? product.images 
@@ -131,7 +128,7 @@ const ProductDetail = () => {
     <div className="product-detail-page">
       <SEO
         title={`Buy ${product?.title || 'Product'} in Nepal | Instant Code | GamePasal`}
-        description={`${product?.title || 'Digital product'} – instant delivery in Nepal. Pay with eSewa, Khalti, or bank transfer at GamePasal.`}
+        description={`${product?.title || 'Digital product'} – instant delivery in Nepal. Pay with Fonepay QR or bank transfer at GamePasal.`}
         keywords={`game gift cards Nepal, buy ${product?.platform || ''} gift cards, ${product?.title || ''}, digital code Nepal`}
         canonical={`https://www.gamepasal.com/product/${product?.slug || id}`}
         jsonLd={product ? ({
@@ -151,25 +148,32 @@ const ProductDetail = () => {
             '@type': 'Offer',
             priceCurrency: 'NPR',
             price: String(product.salePrice || product.price),
-            availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+            availability: stockValue > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
             url: `https://www.gamepasal.com/product/${product.slug || id}`
           }
         }) : null}
       />
       <div className="container">
         {/* Breadcrumb */}
-        <div className="breadcrumb">
-          <button 
-            className="back-btn"
-            onClick={() => navigate(-1)}
-          >
-            <ArrowLeft size={20} />
-            Back
-          </button>
-          <span className="breadcrumb-path">
-            Products / {product.platform} / {product.title}
-          </span>
-        </div>
+        <nav aria-label="Breadcrumb" className="gp-breadcrumb">
+          <ul className="gp-breadcrumb-list">
+            <li className="gp-breadcrumb-item gp-breadcrumb-chip">
+              <svg xmlns="http://www.w3.org/2000/svg" className="icon" viewBox="0 0 511 511.999"><path d="M498.7 222.695c-.016-.011-.028-.027-.04-.039L289.805 13.81C280.902 4.902 269.066 0 256.477 0c-12.59 0-24.426 4.902-33.332 13.809L14.398 222.55c-.07.07-.144.144-.21.215-18.282 18.386-18.25 48.218.09 66.558 8.378 8.383 19.44 13.235 31.273 13.746.484.047.969.07 1.457.07h8.32v153.696c0 30.418 24.75 55.164 55.168 55.164h81.711c8.285 0 15-6.719 15-15V376.5c0-13.879 11.293-25.168 25.172-25.168h48.195c13.88 0 25.168 11.29 25.168 25.168V497c0 8.281 6.715 15 15 15h81.711c30.422 0 55.168-24.746 55.168-55.164V303.14h7.719c12.586 0 24.422-4.903 33.332-13.813 18.36-18.367 18.367-48.254.027-66.633zm-21.243 45.422a17.03 17.03 0 0 1-12.117 5.024h-22.72c-8.285 0-15 6.714-15 15v168.695c0 13.875-11.289 25.164-25.168 25.164h-66.71V376.5c0-30.418-24.747-55.168-55.169-55.168H232.38c-30.422 0-55.172 24.75-55.172 55.168V482h-66.71c-13.876 0-25.169-11.29-25.169-25.164V288.14c0-8.286-6.715-15-15-15H48a13.9 13.9 0 0 0-.703-.032c-4.469-.078-8.66-1.851-11.8-4.996-6.68-6.68-6.68-17.55 0-24.234.003 0 .003-.004.007-.008l.012-.012L244.363 35.02A17.003 17.003 0 0 1 256.477 30c4.574 0 8.875 1.781 12.113 5.02l208.8 208.796.098.094c6.645 6.692 6.633 17.54-.031 24.207zm0 0"/></svg>
+              <button onClick={() => navigate('/')} className="label">Home</button>
+            </li>
+            <li className="gp-breadcrumb-sep">/</li>
+            <li className="gp-breadcrumb-item gp-breadcrumb-chip">
+              <Monitor size={16} style={{ marginRight: 8 }} />
+              <button onClick={() => navigate(`/products?category=${encodeURIComponent(product.platform || 'All')}`)} className="label">
+                {product.platform || 'Products'}
+              </button>
+            </li>
+            <li className="gp-breadcrumb-sep">/</li>
+            <li className="gp-breadcrumb-item gp-breadcrumb-chip active">
+              <span className="label">{product.title}</span>
+            </li>
+          </ul>
+        </nav>
 
         {/* Product Bento Layout */}
         <div className="product-bento-grid">
@@ -250,10 +254,10 @@ const ProductDetail = () => {
             </div>
             
             <div className="stock-info">
-              {product.stock > 0 ? (
+              {stockValue > 0 ? (
                 <span className="in-stock">
                   <CheckCircle size={14} />
-                  In Stock ({product.stock})
+                  In Stock ({stockValue})
                 </span>
               ) : (
                 <span className="out-of-stock">Out of Stock</span>
@@ -272,7 +276,7 @@ const ProductDetail = () => {
                 <span>{quantity}</span>
                 <button 
                   onClick={() => setQuantity(quantity + 1)}
-                  disabled={quantity >= product.stock}
+                  disabled={quantity >= stockValue}
                 >
                   +
                 </button>
@@ -283,7 +287,7 @@ const ProductDetail = () => {
               <button 
                 className="btn btn-primary btn-compact"
                 onClick={handleBuyNow}
-                disabled={product.stock === 0}
+                disabled={stockValue === 0}
               >
                 <ShoppingCart size={16} />
                 Buy Now
@@ -292,7 +296,7 @@ const ProductDetail = () => {
               <button 
                 className={`btn btn-secondary btn-compact ${isInCart(product._id) ? 'added' : ''}`}
                 onClick={handleAddToCart}
-                disabled={product.stock === 0 || isInCart(product._id)}
+                disabled={stockValue === 0 || isInCart(product._id)}
               >
                 {isInCart(product._id) ? 'Added' : 'Add to Cart'}
               </button>
@@ -388,49 +392,7 @@ const ProductDetail = () => {
           </div>
         )}
 
-        {/* Related Products */}
-        {relatedProducts.length > 0 && (
-  <div className="related-products">
-    <h2>Related Products</h2>
-    <Swiper
-      modules={[Navigation, Pagination]}
-      spaceBetween={24}
-      slidesPerView={3}
-      
-      pagination={{ clickable: true }}
-      breakpoints={{
-        1024: { slidesPerView: 3 },
-        768: { slidesPerView: 2 },
-        480: { slidesPerView: 1 }
-      }}
-      style={{ padding: "10px 0 30px 0" }}
-    >
-      {relatedProducts.map((relatedProduct) => (
-        <SwiperSlide key={relatedProduct._id}>
-          <div
-            className="related-product-card"
-            onClick={() => navigate(`/product/${relatedProduct._id}`)}
-          >
-            <img src={getImageSrc(relatedProduct.image)} alt={relatedProduct.title} loading="lazy" decoding="async" />
-            <div className="related-product-info">
-              <h4>{relatedProduct.title}</h4>
-              <div className="related-product-price1">
-                {relatedProduct.salePrice ? (
-                  <>
-                    <span className="current">NRS {relatedProduct.salePrice}</span>
-                    <span className="original">NRS {relatedProduct.price}</span>
-                  </>
-                ) : (
-                  <span className="current">NRS {relatedProduct.price}</span>
-                )}
-              </div>
-            </div>
-          </div>
-        </SwiperSlide>
-      ))}
-    </Swiper>
-  </div>
-)}
+        <ProductRecommendations title="Recommended for You" products={relatedProducts} />
 
       </div>
     </div>

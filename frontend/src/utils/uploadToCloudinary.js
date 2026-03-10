@@ -8,13 +8,13 @@
  * @param {string} [folder] - Optional folder name ("products", "banners")
  * @returns {Promise<string>} Cloudinary secure_url string
  */
-export const uploadToCloudinary = async (file, uploadPreset, folder = "") => {
+export const uploadToCloudinary = async (file, uploadPreset = "Gamepasal", folder = "") => {
   const CLOUD_NAME = "dtuqbqgz7"; // Your cloud name here
-  const url = `https://api.cloudinary.com/v1_1/$dtuqbqgz7/upload`;
+  const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`;
 
   const formData = new FormData();
   formData.append("file", file);
-  formData.append("Gamepasal", uploadPreset);
+  formData.append("upload_preset", uploadPreset);
   if (folder) formData.append("folder", folder);
 
   const response = await fetch(url, {
@@ -27,7 +27,7 @@ export const uploadToCloudinary = async (file, uploadPreset, folder = "") => {
     try {
       const err = await response.json();
       if (err.error && err.error.message) message = err.error.message;
-    } catch (_) {}
+    } catch (_) { }
     throw new Error(message);
   }
 

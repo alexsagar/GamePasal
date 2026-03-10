@@ -4,14 +4,24 @@
   background: #0a0a0a;
 }
 
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 24px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #333;
+/* Breadcrumb (legacy) replaced below */
+.breadcrumb { display:none; }
+
+/* New breadcrumb */
+.gp-breadcrumb { margin: 8px 0 20px 0; }
+.gp-breadcrumb-list { display:flex; align-items:center; justify-content:center; gap:16px; }
+.gp-breadcrumb-item { display:flex; align-items:center; }
+.gp-breadcrumb-sep { color:#94a3b8; font-size:16px; }
+.gp-breadcrumb-chip {
+  color:#475569; background:#0f172a1a;
+  padding:8px 14px; border-radius:9999px; font-size:13px; letter-spacing:.02em;
+  font-weight:600; cursor:pointer; display:flex; align-items:center;
+  border:1px solid rgba(148,163,184,.15);
 }
+.gp-breadcrumb-chip .icon { width:16px; height:16px; fill:currentColor; margin-right:8px; }
+.gp-breadcrumb-chip .label { background:none; border:none; color:inherit; font:inherit; cursor:pointer; padding:0; }
+.gp-breadcrumb-chip.active { background:#111827; color:#fff; border-color:#111827; }
+.gp-breadcrumb-chip:hover { border-color:#ff5661; color:#ff5661; }
 
 .back-btn {
   display: flex;
@@ -548,73 +558,6 @@
 }
 
 /* Related Products */
-.related-products {
-  margin-bottom: 40px;
-}
-
-.related-products h2 {
-  font-size: 20px;
-  font-weight: 600;
-  color: #ffffff;
-  margin-bottom: 16px;
-}
-
-.related-products .swiper {
-  padding-bottom: 24px;
-}
-
-.related-product-card {
-  background: #181818;
-  border-radius: 12px;
-  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border: 1px solid #282828;
-}
-
-.related-product-card:hover {
-  box-shadow: 0 4px 20px rgba(255, 71, 87, 0.2);
-  transform: translateY(-2px) scale(1.02);
-}
-
-.related-product-card img {
-  width: 100%;
-  height: 100px;
-  object-fit: cover;
-  border-bottom: 1px solid #333;
-}
-
-.related-product-info {
-  padding: 12px;
-}
-
-.related-product-info h4 {
-  font-size: 13px;
-  font-weight: 600;
-  color: #ffffff;
-  margin-bottom: 6px;
-  line-height: 1.3;
-}
-
-.related-product-price1 {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.related-product-price1 .current {
-  color: #ff4757;
-  font-weight: 700;
-  font-size: 13px;
-}
-
-.related-product-price1 .original {
-  color: #aaa;
-  text-decoration: line-through;
-  font-size: 11px;
-}
-
 /* Error State */
 .error-state {
   text-align: center;

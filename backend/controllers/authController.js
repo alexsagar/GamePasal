@@ -6,6 +6,15 @@ const { authenticator } = require('otplib');
 const User = require('../models/User');
 const { sendOTPEmail } = require('../utils/sendOTP');
 
+const serializeUser = (user) => ({
+  id: user._id,
+  username: user.username,
+  email: user.email,
+  phone: user.phone,
+  role: user.role,
+  isVerified: user.isVerified
+});
+
 // Generate JWT Token with enhanced security
 const generateToken = (id) => {
   const payload = { 
@@ -170,14 +179,7 @@ const verifyOTP = async (req, res) => {
       data: {
         accessToken,
         refreshToken,
-        user: {
-          id: user._id,
-          username: user.username,
-          email: user.email,
-          phone: user.phone,
-          role: user.role,
-          isVerified: user.isVerified
-        }
+        user: serializeUser(user)
       }
     });
 
@@ -276,11 +278,7 @@ const login = async (req, res) => {
         data: {
           twoFactorRequired: true,
           tempToken,
-          user: {
-            id: user._id,
-            username: user.username,
-            email: user.email
-          }
+          user: serializeUser(user)
         }
       });
     }
@@ -302,14 +300,7 @@ const login = async (req, res) => {
       data: {
         accessToken,
         refreshToken,
-        user: {
-          id: user._id,
-          username: user.username,
-          email: user.email,
-          phone: user.phone,
-          role: user.role,
-          isVerified: user.isVerified
-        }
+        user: serializeUser(user)
       }
     });
 
@@ -332,12 +323,7 @@ const getMe = async (req, res) => {
     res.status(200).json({
       success: true,
       user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-        isVerified: user.isVerified,
+        ...serializeUser(user),
         lastLogin: user.lastLogin,
         createdAt: user.createdAt,
         twoFactorAuth: {
@@ -511,13 +497,7 @@ const refreshToken = async (req, res) => {
       message: 'Token refreshed successfully',
       data: {
         accessToken: newAccessToken,
-        user: {
-          id: user._id,
-          username: user.username,
-          email: user.email,
-          role: user.role,
-          isVerified: user.isVerified
-        }
+        user: serializeUser(user)
       }
     });
 
@@ -833,13 +813,7 @@ const verify2FALogin = async (req, res) => {
       data: {
         accessToken,
         refreshToken,
-        user: {
-          id: user._id,
-          username: user.username,
-          email: user.email,
-          role: user.role,
-          isVerified: user.isVerified
-        }
+        user: serializeUser(user)
       }
     });
   } catch (error) {
@@ -1018,14 +992,7 @@ const googleLogin = async (req, res) => {
       data: {
         accessToken,
         refreshToken,
-        user: {
-          id: user._id,
-          username: user.username,
-          email: user.email,
-          phone: user.phone,
-          role: user.role,
-          isVerified: user.isVerified
-        }
+        user: serializeUser(user)
       }
     });
 
@@ -1111,14 +1078,7 @@ const facebookLogin = async (req, res) => {
       data: {
         accessToken: accessTokenJWT,
         refreshToken,
-        user: {
-          id: user._id,
-          username: user.username,
-          email: user.email,
-          phone: user.phone,
-          role: user.role,
-          isVerified: user.isVerified
-        }
+        user: serializeUser(user)
       }
     });
 

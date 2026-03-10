@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, Users, Package, ShoppingCart,
-  FileText, Settings, Plus, Edit, Trash2, Eye, Search, Gift, Menu, Wallet
+  FileText, Settings, Plus, Edit, Trash2, Eye, Search, Gift, Menu, Send as SendIcon
 } from "lucide-react";
 import api from "../../services/api";
 import "./AdminPanel.css";
@@ -20,7 +20,6 @@ const getImageSrc = (img) =>
 // =================== AdminPanel Main ===================
 const AdminPanel = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [stats, setStats] = useState({
@@ -48,7 +47,6 @@ const AdminPanel = () => {
     { path: '/admin/products', label: 'Products', icon: Package },
     { path: '/admin/gift-cards', label: 'Gift Cards', icon: Gift },
     { path: '/admin/orders', label: 'Orders', icon: ShoppingCart },
-    { path: '/admin/wallet-reviews', label: 'Wallet Reviews', icon: Wallet },
     { path: '/admin/content', label: 'Content', icon: FileText },
     { path: '/admin/settings', label: 'Settings', icon: Settings },
   ];
@@ -98,7 +96,6 @@ const AdminPanel = () => {
           <Route path="/gift-cards" element={<ProductsManagement categoryFilter="GiftCard" />} />
           <Route path="/orders" element={<OrdersManagement />} />
           <Route path="/content" element={<ContentManagement />} />
-          <Route path="/wallet-reviews" element={<WalletReviews />} />
           <Route path="/settings" element={<AdminSettings />} />
         </Routes>
       </div>
@@ -269,17 +266,36 @@ const ProductsManagement = ({ categoryFilter }) => {
   const [editingProduct, setEditingProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState(categoryFilter || '');
+  const [filterPlatform, setFilterPlatform] = useState('');
 
-    useEffect(() => {
+  useEffect(() => {
     setFilterCategory(categoryFilter || '');
+    setFilterPlatform('');
   }, [categoryFilter]);
 
   useEffect(() => { fetchProducts(); }, []);
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const response = await api.get('/products/admin');
-      setProducts(response.data.data);
+      const pageSize = 50;
+      let currentPage = 1;
+      let totalPages = 1;
+      const allProducts = [];
+
+      do {
+        const response = await api.get('/products/admin', {
+          params: {
+            page: currentPage,
+            limit: pageSize
+          }
+        });
+
+        allProducts.push(...(response.data.data || []));
+        totalPages = Math.max(Number(response.data.totalPages) || 1, 1);
+        currentPage += 1;
+      } while (currentPage <= totalPages);
+
+      setProducts(allProducts);
     } catch (error) {
       console.error('Error fetching products:', error);
     } finally {
@@ -305,8 +321,16 @@ const ProductsManagement = ({ categoryFilter }) => {
       product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       product.platform?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = !filterCategory || product.category === filterCategory;
-    return matchesSearch && matchesCategory;
+    const matchesPlatform = !filterPlatform || product.platform === filterPlatform;
+    return matchesSearch && matchesCategory && matchesPlatform;
   });
+
+  const availablePlatforms = [...new Set(
+    products
+      .filter((product) => !filterCategory || product.category === filterCategory)
+      .map((product) => product.platform)
+      .filter(Boolean)
+  )].sort((left, right) => left.localeCompare(right));
 
   return (
     <div className="products-management">
@@ -324,7 +348,10 @@ const ProductsManagement = ({ categoryFilter }) => {
           </div>
           <select
             value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
+            onChange={(e) => {
+              setFilterCategory(e.target.value);
+              setFilterPlatform('');
+            }}
             className="filter-select"
           >
             <option value="">All Categories</option>
@@ -332,6 +359,26 @@ const ProductsManagement = ({ categoryFilter }) => {
             <option value="GiftCard">Gift Cards</option>
             <option value="Software">Software</option>
           </select>
+          {availablePlatforms.length > 0 && (
+            <select
+              value={filterPlatform}
+              onChange={(e) => setFilterPlatform(e.target.value)}
+              className="filter-select"
+            >
+              <option value="">
+                {filterCategory === 'Game'
+                  ? 'All Game Platforms'
+                  : filterCategory === 'GiftCard'
+                    ? 'All Gift Card Platforms'
+                    : 'All Platforms'}
+              </option>
+              {availablePlatforms.map((platform) => (
+                <option key={platform} value={platform}>
+                  {platform}
+                </option>
+              ))}
+            </select>
+          )}
           <button
             className="btn btn-primary"
             onClick={() => setShowAddForm(true)}
@@ -340,13 +387,15 @@ const ProductsManagement = ({ categoryFilter }) => {
             Add Product
           </button>
           <button className="btn btn-primary" onClick={() => setShowGiftCardForm(true)}>
-  <Plus size={20} /> Add Gift Card
-</button>
+            <Plus size={20} /> Add Gift Card
+          </button>
 
         </div>
       </div>
       {loading ? (
         <div className="loading">Loading products...</div>
+      ) : filteredProducts.length === 0 ? (
+        <div className="loading">No products found for the selected filters.</div>
       ) : (
         <div className="products-grid">
           {filteredProducts.map((product) => (
@@ -396,29 +445,29 @@ const ProductsManagement = ({ categoryFilter }) => {
         </div>
       )}
       {(showAddForm || editingProduct) && (
-  <ProductForm
-    product={editingProduct}
-    onClose={() => {
-      setShowAddForm(false);
-      setEditingProduct(null);
-    }}
-    onSave={() => {
-      fetchProducts();
-      setShowAddForm(false);
-      setEditingProduct(null);
-    }}
-  />
-)}
+        <ProductForm
+          product={editingProduct}
+          onClose={() => {
+            setShowAddForm(false);
+            setEditingProduct(null);
+          }}
+          onSave={() => {
+            fetchProducts();
+            setShowAddForm(false);
+            setEditingProduct(null);
+          }}
+        />
+      )}
 
-{showGiftCardForm && (
-  <GiftCardForm
-    onClose={() => setShowGiftCardForm(false)}
-    onSave={() => {
-      fetchProducts();
-      setShowGiftCardForm(false);
-    }}
-  />
-)}
+      {showGiftCardForm && (
+        <GiftCardForm
+          onClose={() => setShowGiftCardForm(false)}
+          onSave={() => {
+            fetchProducts();
+            setShowGiftCardForm(false);
+          }}
+        />
+      )}
 
     </div>
   );
@@ -442,6 +491,9 @@ const ProductForm = ({ product, onClose, onSave }) => {
     type: product?.type || '',
     developer: product?.developer || '',
     publisher: product?.publisher || '',
+    region: product?.region || '',
+    tags: product?.tags ? product.tags.join(', ') : '',
+    delivery_type: product?.delivery_type || '',
     releaseDate: product?.releaseDate ? product.releaseDate.split('T')[0] : '',
     isFeatured: product?.isFeatured || false,
     isTopSeller: product?.isTopSeller || false,
@@ -459,8 +511,8 @@ const ProductForm = ({ product, onClose, onSave }) => {
   const [imagePreview, setImagePreview] = useState(
     product?.image
       ? (product.image.startsWith('http')
-          ? product.image
-          : `http://localhost:5000/uploads/${product.image}`)
+        ? product.image
+        : `http://localhost:5000/uploads/${product.image}`)
       : null
   );
   const [loading, setLoading] = useState(false);
@@ -687,23 +739,47 @@ const ProductForm = ({ product, onClose, onSave }) => {
             </div>
           )}
 
-          {formData.category !== 'Software' && (
-            <div className="form-row">
-              <div className="form-group">
-                <label>Developer</label>
-                <input type="text" name="developer" value={formData.developer} onChange={handleInputChange} />
+            {formData.category !== 'Software' && (
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Developer</label>
+                  <input type="text" name="developer" value={formData.developer} onChange={handleInputChange} />
+                </div>
+                <div className="form-group">
+                  <label>Publisher</label>
+                  <input type="text" name="publisher" value={formData.publisher} onChange={handleInputChange} />
+                </div>
               </div>
-              <div className="form-group">
-                <label>Publisher</label>
-                <input type="text" name="publisher" value={formData.publisher} onChange={handleInputChange} />
-              </div>
-            </div>
-          )}
+            )}
 
-          {formData.category !== 'Software' && (
-            <div className="form-row">
-              <div className="form-group">
-                <label>Release Date</label>
+            {formData.category !== 'Software' && (
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Region</label>
+                  <input type="text" name="region" value={formData.region} onChange={handleInputChange} placeholder="Global, Nepal, US, EU" />
+                </div>
+                <div className="form-group">
+                  <label>Delivery Type</label>
+                  <select name="delivery_type" value={formData.delivery_type} onChange={handleInputChange}>
+                    <option value="">Select Delivery Type</option>
+                    <option value="gift_card_code">Gift Card Code</option>
+                    <option value="game_redeem_code">Game Redeem Code</option>
+                    <option value="game_login_details">Game Login Details</option>
+                  </select>
+                </div>
+              </div>
+            )}
+
+            <div className="form-group">
+              <label>Tags</label>
+              <input type="text" name="tags" value={formData.tags} onChange={handleInputChange} placeholder="steam, wallet, top-up, action, battle royale" />
+              <small className="file-help">Use comma-separated tags for recommendation matching.</small>
+            </div>
+
+            {formData.category !== 'Software' && (
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Release Date</label>
                 <input type="date" name="releaseDate" value={formData.releaseDate} onChange={handleInputChange} />
               </div>
             </div>
@@ -823,7 +899,10 @@ const GiftCardForm = ({ onClose, onSave }) => {
     image: "",
     imageUrl: "",
     description: "",
-    stock: ""
+    stock: "",
+    publisher: "",
+    region: "",
+    tags: ""
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -862,12 +941,17 @@ const GiftCardForm = ({ onClose, onSave }) => {
       submitData.append("title", formData.title);
       submitData.append("price", formData.price);
       submitData.append("category", "GiftCard");
-      submitData.append("platform", formData.platform);
-      submitData.append("description", formData.description);
-      submitData.append("stock", formData.stock);
+        submitData.append("platform", formData.platform);
+        submitData.append("description", formData.description);
+        submitData.append("stock", formData.stock);
+        submitData.append("publisher", formData.publisher || formData.platform);
+        submitData.append("region", formData.region);
+        submitData.append("tags", formData.tags);
+        submitData.append("type", "gift-card");
+        submitData.append("delivery_type", "gift_card_code");
 
-      // If image by URL
-      if (!selectedFile && formData.imageUrl.trim()) {
+        // If image by URL
+        if (!selectedFile && formData.imageUrl.trim()) {
         submitData.append("image", formData.imageUrl);
       }
       if (selectedFile) {
@@ -953,17 +1037,51 @@ const GiftCardForm = ({ onClose, onSave }) => {
               required
             />
           </div>
-          <div className="form-group">
-            <label>Stock</label>
-            <input
-              type="number"
-              name="stock"
+            <div className="form-group">
+              <label>Stock</label>
+              <input
+                type="number"
+                name="stock"
               min="0"
               value={formData.stock}
               onChange={handleInputChange}
-              required
-            />
-          </div>
+                required
+              />
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Publisher / Brand</label>
+                <input
+                  type="text"
+                  name="publisher"
+                  value={formData.publisher}
+                  onChange={handleInputChange}
+                  placeholder="Steam, Sony, Microsoft"
+                />
+              </div>
+              <div className="form-group">
+                <label>Region</label>
+                <input
+                  type="text"
+                  name="region"
+                  value={formData.region}
+                  onChange={handleInputChange}
+                  placeholder="Global, Nepal, US"
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>Tags</label>
+              <input
+                type="text"
+                name="tags"
+                value={formData.tags}
+                onChange={handleInputChange}
+                placeholder="gift card, wallet top-up, steam balance"
+              />
+            </div>
 
           <div className="form-group">
             <label>Gift Card Image</label>
@@ -1010,9 +1128,16 @@ const GiftCardForm = ({ onClose, onSave }) => {
 
 
 // =================== Orders Management ===================
+import OrderStatusBadge from "../../components/OrderStatusBadge/OrderStatusBadge";
+
 const OrdersManagement = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [viewingOrder, setViewingOrder] = useState(null);
+  const [deliverItems, setDeliverItems] = useState([]);
+  const [adminNotes, setAdminNotes] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => { fetchOrders(); }, []);
   const fetchOrders = async () => {
@@ -1026,14 +1151,87 @@ const OrdersManagement = () => {
       setLoading(false);
     }
   };
+
   const updateOrderStatus = async (orderId, status) => {
     try {
       await api.put(`/orders/${orderId}`, { status });
       fetchOrders();
     } catch (error) {
-      console.error('Error updating order:', error);
+      alert(error?.response?.data?.message || 'Failed to update order status');
     }
   };
+
+  const updatePaymentStatus = async (orderId, paymentStatus) => {
+    try {
+      await api.put(`/orders/${orderId}`, { paymentStatus });
+      fetchOrders();
+    } catch (error) {
+      alert(error?.response?.data?.message || 'Failed to update payment status');
+    }
+  };
+
+  const deleteOrder = async (orderId) => {
+    const confirmed = window.confirm('Delete this order permanently? Delivered and completed orders cannot be deleted.');
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await api.delete(`/orders/${orderId}/delete`);
+      fetchOrders();
+      alert('Order deleted successfully');
+    } catch (error) {
+      alert(error?.response?.data?.message || 'Failed to delete order');
+    }
+  };
+
+  const handleOpenDeliveryModal = (order) => {
+    setSelectedOrder(order);
+    setAdminNotes('');
+
+    // Pre-populate delivery items based on ordered products
+    const initialItems = order.products.map(p => ({
+      productId: p.productId?._id || p.productId,
+      title: p.title || 'Unknown Product',
+      delivery_type: p.productId?.delivery_type || 'game_redeem_code', // default if not populated
+      redeem_code: '',
+      login_email: '',
+      login_password: '',
+      instructions: ''
+    }));
+
+    setDeliverItems(initialItems);
+  };
+
+  const canFulfillOrder =
+    (order) => order.paymentStatus === 'paid' ||
+      order.paymentStatus === 'verified' ||
+      order.status === 'payment_verified';
+
+  const sendDelivery = async () => {
+    if (!selectedOrder) return;
+    setSubmitting(true);
+    try {
+      const itemsPayload = deliverItems.map(item => ({
+        ...item
+      }));
+
+      await api.post(`/orders/${selectedOrder._id}/deliver`, {
+        items: itemsPayload,
+        adminNotes
+      });
+
+      setSelectedOrder(null);
+      setDeliverItems([]);
+      fetchOrders();
+      alert('Order fulfilled and marked as delivered successfully');
+    } catch (e) {
+      alert(e?.response?.data?.message || 'Failed to send delivery');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="orders-management">
       <div className="page-header">
@@ -1051,6 +1249,7 @@ const OrdersManagement = () => {
                 <th>Products</th>
                 <th>Total</th>
                 <th>Status</th>
+                <th>Payment</th>
                 <th>Date</th>
                 <th>Actions</th>
               </tr>
@@ -1059,32 +1258,218 @@ const OrdersManagement = () => {
               {orders.map((order) => (
                 <tr key={order._id}>
                   <td>{order.orderNumber}</td>
-                  <td>{order.userId?.username}</td>
+                  <td>{order.userId?.username || order.guestEmail || 'Guest'}</td>
                   <td>{order.products.length} items</td>
                   <td>NRS {order.totalAmount}</td>
                   <td>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <OrderStatusBadge status={order.status} paymentStatus={order.paymentStatus} />
+                      <select
+                        value={order.status}
+                        onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+                        className="status-select mt-1"
+                        style={{ marginTop: '4px', fontSize: '0.75rem', padding: '2px' }}
+                      >
+                        <option value="order_placed">Order Placed</option>
+                        <option value="payment_pending">Payment Pending</option>
+                        <option value="payment_verified">Payment Verified</option>
+                        <option value="processing">Processing</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                        <option value="failed">Failed</option>
+                        <option value="out_of_stock">Out of Stock</option>
+                        <option value="refunded">Refunded</option>
+                      </select>
+                    </div>
+                  </td>
+                  <td>
                     <select
-                      value={order.status}
-                      onChange={(e) => updateOrderStatus(order._id, e.target.value)}
+                      value={order.paymentStatus}
+                      onChange={(e) => updatePaymentStatus(order._id, e.target.value)}
                       className="status-select"
                     >
-                      <option value="pending">Pending</option>
-                      <option value="processing">Processing</option>
-                      <option value="confirmed">Confirmed</option>
-                      <option value="delivered">Delivered</option>
-                      <option value="cancelled">Cancelled</option>
+                      <option value="pending">pending</option>
+                      <option value="awaiting_verification">awaiting_verification</option>
+                      <option value="verified">verified</option>
+                      <option value="paid">paid</option>
+                      <option value="rejected">rejected</option>
+                      <option value="expired">expired</option>
                     </select>
                   </td>
                   <td>{new Date(order.createdAt).toLocaleDateString()}</td>
                   <td>
-                    <button className="btn-icon">
-                      <Eye size={16} />
-                    </button>
+                    <div className="action-buttons">
+                      <button
+                        className="btn-icon"
+                        title="View"
+                        onClick={() => setViewingOrder(order)}
+                      >
+                        <Eye size={16} />
+                      </button>
+                      <button
+                        className="btn-icon"
+                        title="Fulfill & Deliver Order"
+                        onClick={() => handleOpenDeliveryModal(order)}
+                        disabled={!canFulfillOrder(order)}
+                      >
+                        <SendIcon size={16} color={canFulfillOrder(order) ? '#10b981' : '#6b7280'} />
+                      </button>
+                      <button
+                        className="btn-icon danger"
+                        title="Delete Order"
+                        onClick={() => deleteOrder(order._id)}
+                        disabled={['delivered', 'completed'].includes(order.status)}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {viewingOrder && (
+        <div className="modal-overlay">
+          <div className="modal" style={{ maxWidth: '760px' }}>
+            <div className="modal-header">
+              <h2>Order Details</h2>
+              <button className="close-btn" onClick={() => setViewingOrder(null)}>Ã—</button>
+            </div>
+            <div className="product-form" style={{ maxHeight: '70vh', overflowY: 'auto', padding: '16px' }}>
+              <div style={{ marginBottom: '20px', padding: '12px', backgroundColor: '#2a2a2a', borderRadius: '8px' }}>
+                <p style={{ margin: '0 0 8px 0' }}><strong>Order Number:</strong> {viewingOrder.orderNumber}</p>
+                <p style={{ margin: '0 0 8px 0' }}><strong>Customer:</strong> {viewingOrder.userId?.username || viewingOrder.guestEmail || 'Guest'}</p>
+                <p style={{ margin: '0 0 8px 0' }}><strong>Email:</strong> {viewingOrder.userId?.email || viewingOrder.guestEmail || 'N/A'}</p>
+                <p style={{ margin: '0 0 8px 0' }}><strong>Total:</strong> NRS {viewingOrder.totalAmount}</p>
+                <p style={{ margin: '0 0 8px 0' }}><strong>Status:</strong> {viewingOrder.status}</p>
+                <p style={{ margin: '0 0 8px 0' }}><strong>Payment Status:</strong> {viewingOrder.paymentStatus || 'pending'}</p>
+                <p style={{ margin: '0' }}><strong>Created:</strong> {new Date(viewingOrder.createdAt).toLocaleString()}</p>
+              </div>
+
+              <div style={{ marginBottom: '20px' }}>
+                <h3 style={{ marginBottom: '12px' }}>Ordered Products</h3>
+                {viewingOrder.products?.map((product, index) => (
+                  <div
+                    key={`${viewingOrder._id}-${product.productId?._id || product.productId || index}`}
+                    style={{ backgroundColor: '#1a1a1a', padding: '16px', borderRadius: '8px', marginBottom: '12px', border: '1px solid #333' }}
+                  >
+                    <p style={{ margin: '0 0 8px 0' }}><strong>Title:</strong> {product.title}</p>
+                    <p style={{ margin: '0 0 8px 0' }}><strong>Quantity:</strong> {product.quantity}</p>
+                    <p style={{ margin: '0 0 8px 0' }}><strong>Unit Price:</strong> NRS {product.salePrice || product.price}</p>
+                    <p style={{ margin: '0' }}><strong>Line Total:</strong> NRS {((product.salePrice || product.price || 0) * (product.quantity || 0)).toFixed(2)}</p>
+                  </div>
+                ))}
+              </div>
+
+              {viewingOrder.shippingAddress && (
+                <div style={{ marginBottom: '20px' }}>
+                  <h3 style={{ marginBottom: '12px' }}>Customer Details</h3>
+                  <div style={{ backgroundColor: '#1a1a1a', padding: '16px', borderRadius: '8px', border: '1px solid #333' }}>
+                    <p style={{ margin: '0 0 8px 0' }}><strong>Name:</strong> {viewingOrder.shippingAddress.fullName || 'N/A'}</p>
+                    <p style={{ margin: '0 0 8px 0' }}><strong>Email:</strong> {viewingOrder.shippingAddress.email || viewingOrder.guestEmail || 'N/A'}</p>
+                    <p style={{ margin: '0 0 8px 0' }}><strong>Phone:</strong> {viewingOrder.shippingAddress.phone || viewingOrder.userId?.phone || 'N/A'}</p>
+                    <p style={{ margin: '0' }}><strong>Address:</strong> {[
+                      viewingOrder.shippingAddress.address,
+                      viewingOrder.shippingAddress.city,
+                      viewingOrder.shippingAddress.country,
+                      viewingOrder.shippingAddress.zipCode
+                    ].filter(Boolean).join(', ') || 'Digital delivery only'}</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="form-actions">
+                <button className="btn btn-secondary" onClick={() => setViewingOrder(null)}>Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {selectedOrder && (
+        <div className="modal-overlay">
+          <div className="modal" style={{ maxWidth: '700px' }}>
+            <div className="modal-header">
+              <h2>Manual Order Fulfillment</h2>
+              <button className="close-btn" onClick={() => setSelectedOrder(null)}>×</button>
+            </div>
+            <div className="product-form" style={{ maxHeight: '70vh', overflowY: 'auto', padding: '16px' }}>
+              <div style={{ marginBottom: '20px', padding: '12px', backgroundColor: '#2a2a2a', borderRadius: '8px' }}>
+                <p style={{ margin: '0 0 8px 0' }}><strong>Order:</strong> {selectedOrder.orderNumber}</p>
+                <p style={{ margin: '0' }}><strong>Total:</strong> NRS {selectedOrder.totalAmount}</p>
+              </div>
+
+              {deliverItems.map((item, idx) => (
+                <div key={idx} style={{ backgroundColor: '#1a1a1a', padding: '16px', borderRadius: '8px', marginBottom: '16px', border: '1px solid #333' }}>
+                  <h3 style={{ marginTop: 0, borderBottom: '1px solid #333', paddingBottom: '8px' }}>{item.title}</h3>
+                  <div className="form-group">
+                    <label>Fulfillment Type</label>
+                    <select
+                      value={item.delivery_type}
+                      onChange={(e) => {
+                        const next = [...deliverItems];
+                        next[idx].delivery_type = e.target.value;
+                        setDeliverItems(next);
+                      }}
+                    >
+                      <option value="game_redeem_code">Game Redeem Code</option>
+                      <option value="gift_card_code">Gift Card Code</option>
+                      <option value="game_login_details">Game Login Details</option>
+                    </select>
+                  </div>
+
+                  {item.delivery_type === 'game_login_details' ? (
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Login Email / Username</label>
+                        <input type="text" value={item.login_email || ''} onChange={(e) => {
+                          const next = [...deliverItems]; next[idx].login_email = e.target.value; setDeliverItems(next);
+                        }} placeholder="account@example.com" />
+                      </div>
+                      <div className="form-group">
+                        <label>Login Password</label>
+                        <input type="text" value={item.login_password || ''} onChange={(e) => {
+                          const next = [...deliverItems]; next[idx].login_password = e.target.value; setDeliverItems(next);
+                        }} placeholder="Password" />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Redeem Code / Gift Card PIN</label>
+                        <input type="text" value={item.redeem_code || ''} onChange={(e) => {
+                          const next = [...deliverItems]; next[idx].redeem_code = e.target.value; setDeliverItems(next);
+                        }} placeholder="XXXX-XXXX-XXXX-XXXX" />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="form-group">
+                    <label>Instructions to Customer (Optional)</label>
+                    <textarea value={item.instructions || ''} onChange={(e) => {
+                      const next = [...deliverItems]; next[idx].instructions = e.target.value; setDeliverItems(next);
+                    }} placeholder="How to redeem this item..." rows={2} />
+                  </div>
+                </div>
+              ))}
+
+              <div className="form-group">
+                <label>Overall Admin Note / internal memo (Optional)</label>
+                <textarea value={adminNotes} onChange={e => setAdminNotes(e.target.value)} rows={2} />
+              </div>
+
+              <div className="form-actions" style={{ position: 'sticky', bottom: '-16px', backgroundColor: '#0b0b0b', padding: '16px 0', marginTop: '16px' }}>
+                <button className="btn btn-secondary" onClick={() => setSelectedOrder(null)}>Cancel</button>
+                <button className="btn btn-primary" disabled={submitting} onClick={sendDelivery}>
+                  {submitting ? 'Fulfilling...' : 'Fulfill & Send Instructions'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -1152,9 +1537,9 @@ const ContentManagement = () => {
                 <div className="banner-info">
                   <h4>
                     {banner.title}  <span className={`badge ${banner.isActive ? "badge-success" : "badge-error"}`}>
-          {banner.isActive ? "Active" : "Inactive"}
-                      </span>
-                    
+                      {banner.isActive ? "Active" : "Inactive"}
+                    </span>
+
                   </h4>
                   <p>{banner.subtitle}</p>
                 </div>
@@ -1524,264 +1909,3 @@ const RecentOrdersList = () => {
 };
 
 export default AdminPanel;
-
-// =================== Wallet Reviews ===================
-const WalletReviews = () => {
-  const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [status, setStatus] = useState('UNDER_REVIEW');
-  const [userFilter, setUserFilter] = useState('');
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
-  const [note, setNote] = useState('');
-  const [previewUrl, setPreviewUrl] = useState('');
-  const [approveTxn, setApproveTxn] = useState(null);
-  const [adjustTxn, setAdjustTxn] = useState(null);
-  const [rejectTxn, setRejectTxn] = useState(null);
-  const [revertTxn, setRevertTxn] = useState(null);
-
-  const fetchTxns = async () => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams();
-      if (status) params.set('status', status);
-      if (userFilter) params.set('user', userFilter);
-      if (from) params.set('from', from);
-      if (to) params.set('to', to);
-      const res = await api.get(`/wallet/admin/topups?${params.toString()}`);
-      setTransactions(res.data?.data?.transactions || []);
-    } catch (e) {
-      setTransactions([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchTxns(); }, [status, userFilter, from, to]);
-
-  const approve = (txn) => setApproveTxn(txn);
-  const reject = (txn) => setRejectTxn(txn);
-
-  return (
-    <div className="users-management">
-      <div className="page-header">
-        <h1>Wallet Reviews</h1>
-        <div className="page-actions">
-          <select className="filter-select" value={status} onChange={(e)=>setStatus(e.target.value)}>
-            <option value="UNDER_REVIEW">Under Review</option>
-            <option value="PENDING">Pending</option>
-            <option value="SUCCESS">Approved</option>
-            <option value="REJECTED">Rejected</option>
-            <option value="DELETED">Deleted</option>
-          </select>
-          <input className="search-box-input" placeholder="Filter by user id" value={userFilter} onChange={(e)=>setUserFilter(e.target.value)} />
-          <input type="date" value={from} onChange={(e)=>setFrom(e.target.value)} />
-          <input type="date" value={to} onChange={(e)=>setTo(e.target.value)} />
-        </div>
-      </div>
-
-      {loading ? (
-        <div className="loading">Loading top-ups…</div>
-      ) : (
-        <div className="users-table">
-          <table>
-            <thead>
-              <tr>
-                <th>User</th>
-                <th>Amount</th>
-                <th>Status</th>
-                <th>Reference</th>
-                <th>Receipt</th>
-                <th>Created</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((t) => (
-                <tr key={t._id}>
-                  <td>{t.user?.username || t.user?.email || t.user}</td>
-                  <td>NRS {(Math.round(t.amount)/100).toFixed(2)}</td>
-                  <td><span className={`status-badge ${t.status.toLowerCase()}`}>{t.status}</span></td>
-                  <td className="muted">{t.referenceNote || '-'}</td>
-                <td>
-                  {t.receiptUrl ? (
-                    <button
-                      className="btn btn-outline"
-                      onClick={() => {
-                        const ROOT = (import.meta.env.VITE_API_URL || 'http://localhost:5000').replace(/\/$/, '');
-                        const abs = t.receiptUrl.startsWith('http') ? t.receiptUrl : `${ROOT}${t.receiptUrl}`;
-                        setPreviewUrl(abs);
-                      }}
-                    >
-                      View
-                    </button>
-                  ) : '-'}
-                </td>
-                  <td>{new Date(t.createdAt).toLocaleString()}</td>
-                  <td>
-                    {t.status === 'UNDER_REVIEW' && (
-                      <>
-                        <button className="btn btn-primary" onClick={() => approve(t)}>Approve</button>
-                        <button className="btn btn-secondary" onClick={() => reject(t)} style={{ marginLeft: 8 }}>Reject</button>
-                      </>
-                    )}
-                    {t.status === 'SUCCESS' && (
-                      <div style={{ display:'flex', gap:8 }}>
-                        <button className="btn btn-secondary" onClick={()=> setAdjustTxn(t)}>Edit</button>
-                        <button className="btn btn-danger" onClick={()=> setRevertTxn(t)}>Delete</button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-      {previewUrl && (
-        <div className="modal-overlay" onClick={() => setPreviewUrl('')}>
-          <div className="modal" style={{ maxWidth: '90vw', maxHeight: '90vh' }} onClick={(e)=>e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Receipt Preview</h2>
-              <button className="close-btn" onClick={() => setPreviewUrl('')}>×</button>
-            </div>
-            <div className="modal-content" style={{ padding: 0 }}>
-              {previewUrl.toLowerCase().endsWith('.pdf') ? (
-                <iframe title="Receipt PDF" src={previewUrl} style={{ width: '90vw', height: '80vh', border: 'none' }} />
-              ) : (
-                <img src={previewUrl} alt="Receipt" style={{ maxWidth: '90vw', maxHeight: '80vh', display: 'block', margin: '0 auto', background: '#fff' }} />
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-      {/* Approve Modal */}
-      {approveTxn && (
-        <div className="modal-overlay" onClick={()=> setApproveTxn(null)}>
-          <div className="modal" onClick={(e)=>e.stopPropagation()} style={{ maxWidth: 520 }}>
-            <div className="modal-header">
-              <h2>Approve Top‑up</h2>
-              <button className="close-btn" onClick={()=> setApproveTxn(null)}>×</button>
-            </div>
-            <div className="modal-content">
-              <p>Amount: NRS {(Math.round(approveTxn.amount)/100).toFixed(2)}</p>
-              <label>Approval Note (optional)</label>
-              <textarea className="form-input" rows="3" value={note} onChange={(e)=>setNote(e.target.value)} placeholder="Remarks for approval" />
-              <div className="modal-actions">
-                <button className="btn btn-secondary" onClick={()=> setApproveTxn(null)}>Cancel</button>
-                <button className="btn btn-primary" onClick={async ()=>{ 
-                  try { 
-                    await api.post(`/wallet/admin/topups/${approveTxn._id}/approve`, { adminNote: note }); 
-                    setApproveTxn(null); 
-                    setNote(''); 
-                    fetchTxns(); 
-                    // Refresh wallet balance for the affected user
-                    if (window.refreshUserWallet) {
-                      window.refreshUserWallet();
-                    }
-                  } catch(e){ alert('Approve failed: ' + (e.response?.data?.message||'Error')); } 
-                }}>Approve</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Adjust Modal */}
-      {adjustTxn && (
-        <div className="modal-overlay" onClick={()=> setAdjustTxn(null)}>
-          <div className="modal" onClick={(e)=>e.stopPropagation()} style={{ maxWidth: 520 }}>
-            <div className="modal-header">
-              <h2>Edit Approved Amount</h2>
-              <button className="close-btn" onClick={()=> setAdjustTxn(null)}>×</button>
-            </div>
-            <div className="modal-content">
-              <div className="form-row">
-                <div className="form-group">
-                  <label>New amount (NPR)</label>
-                  <input type="number" min="0" className="form-input" id="adj-amount" defaultValue={(Math.round(adjustTxn.amount)/100).toString()} />
-                </div>
-              </div>
-              <label>Admin Note (optional)</label>
-              <textarea className="form-input" rows="3" value={note} onChange={(e)=>setNote(e.target.value)} placeholder="Why changing?" />
-              <div className="modal-actions">
-                <button className="btn btn-secondary" onClick={()=> setAdjustTxn(null)}>Cancel</button>
-                <button className="btn btn-primary" onClick={async ()=>{
-                  const v = /** @type {HTMLInputElement} */(document.getElementById('adj-amount')).value;
-                  if (v === '' || v === null) return;
-                  const n = Number(v);
-                  if (Number.isNaN(n)) return;
-                  try { 
-                    await api.post(`/wallet/admin/topups/${adjustTxn._id}/adjust`, { newAmountPaisa: Math.round(n*100), adminNote: note }); 
-                    setAdjustTxn(null); 
-                    setNote(''); 
-                    fetchTxns(); 
-                    // Refresh wallet balance for the affected user
-                    if (window.refreshUserWallet) {
-                      window.refreshUserWallet();
-                    }
-                  } catch(e){ alert('Adjust failed: ' + (e.response?.data?.message||'Error')); }
-                }}>Save</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Reject Modal */}
-      {rejectTxn && (
-        <div className="modal-overlay" onClick={()=> setRejectTxn(null)}>
-          <div className="modal" onClick={(e)=>e.stopPropagation()} style={{ maxWidth: 520 }}>
-            <div className="modal-header">
-              <h2>Reject Top‑up</h2>
-              <button className="close-btn" onClick={()=> setRejectTxn(null)}>×</button>
-            </div>
-            <div className="modal-content">
-              <label>Rejection Reason</label>
-              <textarea className="form-input" rows="3" value={note} onChange={(e)=>setNote(e.target.value)} placeholder="Reason for rejection" />
-              <div className="modal-actions">
-                <button className="btn btn-secondary" onClick={()=> setRejectTxn(null)}>Cancel</button>
-                <button className="btn btn-primary" onClick={async ()=>{ if (!note.trim()) return; try { await api.post(`/wallet/admin/topups/${rejectTxn._id}/reject`, { adminNote: note }); setRejectTxn(null); setNote(''); fetchTxns(); } catch(e){ alert('Reject failed: ' + (e.response?.data?.message||'Error')); } }}>Reject</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Revert Modal */}
-      {revertTxn && (
-        <div className="modal-overlay" onClick={()=> setRevertTxn(null)}>
-          <div className="modal" onClick={(e)=>e.stopPropagation()} style={{ maxWidth: 520 }}>
-            <div className="modal-header">
-              <h2>Delete Approved Amount</h2>
-              <button className="close-btn" onClick={()=> setRevertTxn(null)}>×</button>
-            </div>
-            <div className="modal-content">
-              <p><strong>Warning:</strong> This will permanently delete this approved amount from the user's wallet.</p>
-              <p>Amount to be deleted: <strong>NRS {(Math.round(revertTxn.amount)/100).toFixed(2)}</strong></p>
-              <p>This action cannot be undone. The user's wallet balance will be reduced by this amount.</p>
-              <label>Admin Note (optional)</label>
-              <textarea className="form-input" rows="3" value={note} onChange={(e)=>setNote(e.target.value)} placeholder="Reason for deletion" />
-              <div className="modal-actions">
-                <button className="btn btn-secondary" onClick={()=> setRevertTxn(null)}>Cancel</button>
-                <button className="btn btn-danger" onClick={async ()=>{
-                  try { 
-                    await api.post(`/wallet/admin/topups/${revertTxn._id}/revert`, { adminNote: note }); 
-                    setRevertTxn(null); 
-                    setNote(''); 
-                    fetchTxns(); 
-                    // Refresh wallet balance for the affected user
-                    if (window.refreshUserWallet) {
-                      window.refreshUserWallet();
-                    }
-                  }
-                  catch(e){ alert('Revert failed: ' + (e.response?.data?.message||'Error')); }
-                }}>Delete</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};

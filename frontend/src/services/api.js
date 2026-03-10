@@ -55,13 +55,13 @@ api.interceptors.response.use(
 
         if (response.data.success) {
           const { accessToken } = response.data.data;
-          
+
           // Update stored token
           localStorage.setItem('accessToken', accessToken);
-          
+
           // Update the failed request with new token
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-          
+
           // Retry the original request
           return api(originalRequest);
         } else {
@@ -111,7 +111,7 @@ export const orderAPI = {
   create: (orderData) => api.post('/orders', orderData),
   getAll: () => api.get('/orders'),
   getById: (id) => api.get(`/orders/${id}`),
-  updateStatus: (id, status) => api.put(`/orders/${id}/status`, { status }),
+  updateStatus: (id, status) => api.put(`/orders/${id}`, { status }),
 };
 
 export const checkoutAPI = {
@@ -131,28 +131,20 @@ export const adminAPI = {
   createProduct: (productData) => api.post('/products', productData),
   updateProduct: (id, productData) => api.put(`/products/${id}`, productData),
   deleteProduct: (id) => api.delete(`/products/${id}`),
-  
+
   // Orders
-  getAllOrders: () => api.get('/orders/all'),
-  updateOrderStatus: (id, status) => api.put(`/orders/${id}/status`, { status }),
-  
+  getAllOrders: () => api.get('/orders'),
+  updateOrderStatus: (id, status) => api.put(`/orders/${id}`, { status }),
+
   // Users
   getAllUsers: () => api.get('/users/all'),
   updateUserRole: (id, role) => api.put(`/users/${id}/role`, { role }),
   deactivateUser: (id) => api.put(`/users/${id}/deactivate`),
-  
+
   // Content
   createBanner: (bannerData) => api.post('/banners', bannerData),
   updateBanner: (id, bannerData) => api.put(`/banners/${id}`, bannerData),
   deleteBanner: (id) => api.delete(`/banners/${id}`),
-};
-
-export const walletAPI = {
-  initTopupEsewaQR: (payload) => api.post('/wallet/topup/esewa-qr/init', payload),
-  uploadReceipt: (formData) => api.post('/wallet/topup/esewa-qr/upload-receipt', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  }),
-  getMyWallet: (params) => api.get('/wallet/me', { params }),
 };
 
 export default api;
